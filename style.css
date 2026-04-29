@@ -1,0 +1,213 @@
+/* ============ 디자인 토큰 ============ */
+:root {
+  --accent: #f97316;
+  --accent2: #0ea5e9;
+  --ink: #1a1a2e;
+  --muted: #64748b;
+  --bg: #fafafa;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --green: #10b981;
+
+  --space-section: clamp(2.5rem, 2rem + 3vw, 5rem);
+  --container-max: 800px;
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #f8fafc;
+    --muted: #94a3b8;
+    --bg: #0f172a;
+    --card: #1e293b;
+    --border: #334155;
+  }
+}
+
+/* ============ Base ============ */
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font-family: 'Apple SD Gothic Neo', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 1.2rem;
+}
+
+/* ============ HERO ============ */
+.hero {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  color: white;
+  padding: clamp(3rem, 2rem + 5vw, 6rem) 0 clamp(2.5rem, 2rem + 4vw, 5rem);
+  text-align: center;
+}
+.hero h1 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.8rem, 1.2rem + 2.5vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.hero .tagline {
+  margin: 0;
+  font-size: clamp(1rem, 0.85rem + 0.6vw, 1.25rem);
+  opacity: 0.95;
+  font-weight: 400;
+}
+
+/* ============ 데모 카드 ============ */
+.demo-card {
+  margin-top: -2.5rem;
+  margin-bottom: var(--space-section);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.screenshot {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #f1f5f9;
+  border-bottom: 1px solid var(--border);
+}
+
+.cta {
+  padding: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1.4rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+.btn-primary[aria-disabled="true"] {
+  background: var(--muted);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.btn-primary:hover:not([aria-disabled="true"]) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(249, 115, 22, 0.35);
+}
+.btn-secondary {
+  background: var(--card);
+  color: var(--ink);
+  border: 1.5px solid var(--border);
+}
+.btn-secondary:hover {
+  border-color: var(--accent2);
+  color: var(--accent2);
+}
+
+.badge {
+  background: rgba(255, 255, 255, 0.25);
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+/* ============ Sections ============ */
+section {
+  margin-bottom: var(--space-section);
+}
+section h2 {
+  font-size: clamp(1.3rem, 1rem + 1vw, 1.8rem);
+  margin: 0 0 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+section p {
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+/* ============ Tech Stack ============ */
+.stack {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.stack li {
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent2);
+}
+
+/* ============ 어떻게 만들었나 ============ */
+.howto p {
+  background: var(--card);
+  border-left: 4px solid var(--accent);
+  padding: 1.2rem 1.4rem;
+  border-radius: 6px;
+  color: var(--ink);
+  margin: 0;
+}
+
+/* ============ Comments ============ */
+.comments .comments-note {
+  font-size: 0.9rem;
+  margin: 0 0 1.5rem;
+}
+.giscus, .giscus-frame {
+  width: 100%;
+  min-height: 200px;
+}
+
+/* ============ Footer ============ */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 2rem 0 3rem;
+  text-align: center;
+}
+footer p {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0;
+}
+footer a {
+  color: var(--accent2);
+  text-decoration: none;
+}
+footer a:hover {
+  text-decoration: underline;
+}
+
+/* ============ 모바일 ============ */
+@media (max-width: 480px) {
+  .demo-card { margin-top: -1.5rem; border-radius: 8px; }
+  .cta { padding: 1rem; flex-direction: column; }
+  .btn { justify-content: center; width: 100%; }
+}
