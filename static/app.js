@@ -39,7 +39,7 @@ const STANCE_COLORS = {
     far_right:{ bg:'#fef2f2', text:'#dc2626', border:'#fecaca', thumb:'#ef4444' },
     unknown:  { bg:'#f8fafc', text:'#64748b', border:'#e2e8f0', thumb:'#94a3b8' },
 };
-const CATEGORIES = ["", "정치", "세계"];
+const CATEGORIES = ["", "정치", "국제"];
 
 /* ── Init ── */
 document.addEventListener("DOMContentLoaded", () => {
