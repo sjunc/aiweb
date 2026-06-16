@@ -1,144 +1,93 @@
-# 9주차 — 데모 소개 페이지 템플릿 (`week09_demo_intro`)
+# 📰 뉴스밸런스 (NewsBalance) — by 성준
 
-> 본인 프로젝트(예: 6주차 칼로리카운터, 또는 본인이 만든 다른 프로젝트)를 소개하는 정적 1페이지 사이트.
-> Cloudflare Pages에 올려서 `<본인 ID>.aiweb2026.site`로 배포한다.
-> 9주차에는 placeholder 상태로 띄우고, 10주차에 진짜 데모 링크가 살아남.
+> **Weekly Media Literacy & Bias Report (9-12주차 통합 포트폴리오)**  
+> 뉴스 기사의 정치적 편향(진보·중도·보수)을 실시간 머신러닝으로 분석하고, 최신 Gemini 2.5 Flash를 활용하여 팩트 기반의 미디어 리터러시 다각적 리포트를 생성하는 웹 서비스 및 랜딩 페이지 저장소입니다.
 
----
-
-## 📁 파일 구성
-
-| 파일 | 역할 | 학생이 교체? |
-|------|------|--------------|
-| `index.html` | 페이지 본문 (Hero · 데모 카드 · Tech Stack · 어떻게 만들었나 · Giscus) | ✅ 5~6곳 placeholder 교체 |
-| `style.css` | 스타일 (1열 모바일 반응형 + 다크/라이트 자동) | ❌ 손대지 마세요 |
-| `screenshot.png` | 데모 스크린샷 placeholder (1280×720) | ✅ 본인 프로젝트 캡쳐로 교체 |
-| `README.md` | 본 가이드 | ❌ |
+* **실시간 랜딩 페이지**: [https://s12.aiweb2026.site](https://s12.aiweb2026.site)
+* **실시간 데모 서버**: [https://s12-demo.aiweb2026.site](https://s12-demo.aiweb2026.site)
 
 ---
 
-## 🚀 사용 흐름 (9주차)
+## 📁 주요 폴더 및 파일 구조
 
-```
-1. 이 zip 압축 해제
-2. 본인 GitHub에 새 PUBLIC 리포 만들기 (예: <username>/s01-aiweb2026)
-3. 4개 파일 모두 push
-4. Cloudflare Pages → Connect to Git → 본인 리포 → Deploy
-5. <project>.pages.dev 접속 확인
-6. index.html placeholder 교체 → push → 1~2분 후 반영 확인
-7. 강사가 클래스 zone에 CNAME 등록 → <id>.aiweb2026.site로 접속 가능
-8. Giscus 위젯 통합 (SECTION 8 참조)
-9. 동료 사이트 댓글 달기 + 본인 사이트 댓글 받기
+```text
+├── .github/workflows/
+│   └── deploy.yml              # GitHub Actions를 통한 AWS EC2 자동 배포 워크플로우 (Node.js 24 런타임 강제)
+├── static/                     # 웹 대시보드(데모) 프론트엔드 정적 파일
+│   ├── index.html              # 실시간 뉴스피드, 편향 그래프, AI 코멘터리 및 챗봇 UI
+│   ├── app.js                  # API 연동, 모달 레이아웃 제어, 이미지 Fallback 및 UI 비동기 로직
+│   └── style.css               # 다크 테마 글래스모피즘(Glassmorphism) 스타일시트
+├── index.html                  # 단일 칼럼 옛날 신문 양식의 프로젝트 설명 랜딩 페이지
+├── style.css                   # 랜딩 페이지 전용 CSS (상단 고정 네비게이션, 반응형 단일 칼럼 최적화)
+├── contents.md                 # 랜딩 페이지 내에 동적으로 바인딩(zero-md)되는 프로젝트 요약서
+├── app.py                      # FastAPI 백엔드 서버 (API 라우팅 및 static 서빙)
+├── debate_engine.py            # Gemini 2.5 Flash API 호출 및 프롬프트 제어 (이중 API 키 자동 로테이션 설계)
+├── naver_news.py               # 네이버 뉴스 OpenAPI 수집 및 스레드풀 기반 기사 og:image 병렬 크롤러
+├── ml_classifier.py            # 머신러닝 모델 학습 스크립트 (TF-IDF + LDA + Logistic Regression)
+├── bias_model.pkl              # 학습이 완료된 245KB 초경량 직렬화 모델 파일
+├── Dockerfile                  # FastAPI 앱 컨테이너화를 위한 Docker 명세
+├── docker-compose.yml          # FastAPI와 Nginx 리버스 프록시를 묶어주는 Docker Compose 명세
+├── nginx.conf                  # Nginx 프록시 라우팅 및 80포트 바인딩 설정
+└── requirements.txt            # Python 의존성 파일
 ```
 
 ---
 
-## ✏️ 교체할 placeholder
+## 🤖 핵심 기술 명세 및 시스템 아키텍처
 
-`index.html`을 열면 `⬇⬇⬇ 본인 정보로 교체 ⬇⬇⬇` 마커가 6군데 있습니다. 본인 프로젝트 정보로 채우세요.
+### 1. 실시간 뉴스 수집 & 병렬 썸네일 크롤링 (`naver_news.py`)
+- **이슈 정렬**: 네이버 뉴스 API에서 연관성 및 화제성 순인 `sort=sim` 유사도 기준으로 실시간 기사를 포괄적으로 수집합니다.
+- **병렬 크롤러**: 네이버 API가 미제공하는 기사 대표 이미지를 획득하기 위해 `ThreadPoolExecutor`(10개 워커 스레드)를 가동하여 원문 HTML의 Open Graph 태그(`og:image`)를 2.5초 내외로 병렬 크롤링합니다.
 
-> 💡 어떤 프로젝트를 소개해도 OK — 6주차 칼로리카운터, 본인이 따로 만든 프로젝트, 학기 중 다른 결과물 모두 가능.
+### 2. 정치 편향성 ML 분석 파이프라인 (`ml_classifier.py`)
+- 26개 언론사의 대량 뉴스 기사 데이터를 토대로 학습된 **TF-IDF + LDA(Latent Dirichlet Allocation) + Logistic Regression(L2 규제)** 파이프라인입니다.
+- **245KB 초경량 모델 (`bias_model.pkl`)**로 경량화하여 추론 시 CPU 점유를 최소화하고 1ms 내외로 진보·중도·보수 확률(%)을 계산합니다.
 
-### 1. `<title>` + `<meta description>` (line 6~9)
-```html
-<title>🚀 [본인 프로젝트 이름] — by <본인 익명 ID></title>
-<meta name="description" content="[본인 프로젝트 한 줄 설명]" />
-```
-→ `[본인 프로젝트 이름]`, `[본인 프로젝트 한 줄 설명]`, `<본인 익명 ID>` 세 자리를 본인 정보로 교체.
-
-### 2. Hero 영역 (line 18~21)
-```html
-<h1>🚀 [본인 프로젝트 이름]</h1>
-<p class="tagline">[프로젝트가 무엇을 하는지 한 줄로]</p>
-```
-→ 프로젝트 이름 + 한 줄 catchphrase. 이모지는 자유롭게 (예: 🍱 음식, 🎨 그림, 🤖 챗봇 등).
-
-### 3. 데모 카드 — 스크린샷 (line 28~30)
-```html
-<img class="screenshot" src="screenshot.png" alt="[본인 프로젝트] 데모 화면" />
-```
-→ 같은 폴더의 `screenshot.png`를 본인 프로젝트 화면 캡쳐로 덮어쓰기. (alt 텍스트도 본인 데모에 맞게)
-
-### 4. 데모 카드 — 버튼 2개 (line 33~43)
-```html
-<a class="btn btn-primary" href="#" aria-disabled="true" title="다음 주에 살아납니다">
-  ▶ Live Demo <span class="badge">Coming Week 10</span>
-</a>
-...
-<a class="btn btn-secondary" href="https://github.com/<본인 GitHub username>/<본인 프로젝트 리포>" target="_blank" ...>
-```
-→ 9주차 오늘은 Live Demo 버튼은 그대로 두기. **10주차에 첫 번째 버튼 `href="#"` 를 `href="https://<본인 ID>-demo.aiweb2026.site"`로 교체.**
-→ 두 번째 버튼의 GitHub URL은 본인 프로젝트 리포로.
-
-### 5. Tech Stack (line 51~57)
-```html
-<ul class="stack">
-  <li>[기술 1]</li>
-  <li>[기술 2]</li>
-  <li>[기술 3]</li>
-  ...
-</ul>
-```
-→ 본인 프로젝트가 실제로 쓴 기술로 교체. 다음 주 배포에 쓸 Docker / Oracle / GitHub Actions는 그대로 둬도 OK.
-
-### 6. "어떻게 만들었나" (line 64~70)
-```html
-<p>
-  [무엇을 만들었나 — 프로젝트의 핵심 기능 한 문장.]
-  [어떤 기술 / 모델 / API 를 써서 어떻게 동작시키는가.]
-  [사용자가 어떻게 쓰는가 — 입력은 무엇, 출력은 무엇.]
-</p>
-```
-→ 본인 프로젝트를 3줄로 설명. 무엇을 / 어떻게 / 어떤 기술로.
+### 3. 사실 기반의 고성능 AI 리포트 (`debate_engine.py`)
+- Gemini 2.5 Flash API를 활용하여 4대 항목(편향 포인트 지적, 타 성향 비교, 팩트체크, 매체별 강조 차이) 분석을 제공합니다.
+- **속도 향상**: 1~2문장 내외로 응답 길이를 간결하게 제한하여 API 대기 시간을 최소화했습니다.
+- **문체 규제**: 모호하고 추측성 짙은 어조(`할 것입니다`, `보입니다`)를 완전히 금지하고, 기사 내 실제 수치나 팩트를 근거로 한 단정적 어조(`합니다`, `입니다`, `확인됩니다`)를 적용합니다.
+- **이중 API 키 Fallback**: 기본 API 키에 에러 또는 사용량 초과(Quota Exceeded)가 발생할 경우, 환경 변수로 지정된 백업 키(`GEMINI_API_KEY_BACKUP`)로 **즉시 자동 전환하여 2차 요청을 수행**하는 무중단 시스템이 적용되어 있습니다.
 
 ---
 
-## 💬 Giscus 위젯 통합 (SECTION 8에서)
+## 🚀 배포 가이드 (AWS EC2 + Docker)
 
-`index.html` 하단 `<section id="comments">` 안에 placeholder script가 있습니다. 9주차 SECTION 8에서:
+### 1. EC2 인프라 및 보안 그룹 준비
+- Ubuntu Server 22.04 LTS 가상 서버를 가동하고 탄력적 IP(Elastic IP)를 할당하여 고정합니다.
+- 인바운드 보안 그룹에서 포트 `80` (HTTP), `443` (HTTPS), `22` (SSH), `5678` (n8n 자동화 서버용)을 오픈합니다.
 
-1. https://giscus.app/ko 접속 → 본인 리포 입력 → 자동 생성된 script 복사
-2. `index.html`의 기존 `<script src="https://giscus.app/client.js" ...>` 통째 교체
-3. `data-repo` / `data-repo-id` / `data-category-id` 세 값이 본인 것으로 채워져야 함
+### 2. 서버 초기 설정 및 패키지 설치 (SSH 접속)
+```bash
+# swap 메모리 2GB 추가 (빌드 시 메모리 부족 방지)
+sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 
----
+# Docker 설치
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER && newgrp docker
+```
 
-## 🔍 검증 체크리스트
+### 3. 소스 클론 및 환경 설정
+```bash
+cd ~
+git clone https://github.com/sjunc/aiweb.git newsbalance
+cd newsbalance
 
-- [ ] `<title>`이 본인 프로젝트 이름으로
-- [ ] Hero 제목 + 한 줄 설명이 본인 정보
-- [ ] `screenshot.png`가 본인 프로젝트 캡쳐
-- [ ] "Source on GitHub" 링크가 본인 프로젝트 리포로 연결
-- [ ] Tech Stack이 본인 프로젝트 실제 사용 기술
-- [ ] "어떻게 만들었나"가 본인 프로젝트 설명
-- [ ] Giscus script의 `data-repo`가 본인 리포로
-- [ ] 페이지 하단에 GitHub 로그인 버튼이 있는 댓글창이 보임
+# .env 파일 생성 및 자격 증명 입력
+cat <<EOF > .env
+GEMINI_API_KEY=YOUR_PRIMARY_GEMINI_KEY
+GEMINI_API_KEY_BACKUP=YOUR_BACKUP_GEMINI_KEY
+NAVER_CLIENT_ID=YOUR_NAVER_CLIENT_ID
+NAVER_CLIENT_SECRET=YOUR_NAVER_CLIENT_SECRET
+EOF
+```
 
----
-
-## ⚠️ 자주 막히는 함정
-
-| 증상 | 원인 | 해결 |
-|------|------|------|
-| Pages 빌드 실패 `command not found` | Framework preset 자동 감지 잘못 | preset = **None**, build command **공란** |
-| Giscus 댓글창 안 뜸 | 리포 PRIVATE / Discussions OFF / giscus 앱 미설치 | SECTION 8의 3종 체크리스트 |
-| 522 에러 (커스텀 도메인) | zone에 CNAME만, Pages에 도메인 미등록 | Pages → Custom domains 먼저 등록 |
-| `screenshot.png` 너무 큼 | Cloudflare Pages 자산당 25 MiB 한도 | 1280×720 / 압축 (TinyPNG 등) |
-| 모바일에서 글자 안 보임 | screenshot 해상도 낮음 | 1280×720 이상 권장 |
-
----
-
-## 📝 10주차에서 할 일 (다음 주 예고)
-
-1. Oracle 서버에 본인 프로젝트 Docker 배포 → `<id>-demo.aiweb2026.site` 작동
-2. 본 페이지의 "Live Demo" 버튼 `href="#"` → `href="https://<id>-demo.aiweb2026.site"` 교체
-3. push → Cloudflare Pages 자동 빌드 → 버튼 살아남
-4. 동료들이 9주차에 단 댓글 thread에 답글 ("이제 데모 진짜 작동해요!")
-
----
-
-## 출처
-
-- 본 템플릿: `00_for_me/src/week09_demo_intro/`
-- 9주차 강의안: `00_for_me/docs/09_week09.html`
-- 분배표: `00_for_me/docs/student_subdomain_assignments.md`
+### 4. Docker Compose 서비스 실행
+```bash
+docker compose up -d --build
+```
+- 실행 이후, Nginx 프록시를 통해 브라우저에서 `http://<EC2_IP>` 또는 매핑된 도메인 접속 시 웹 서비스가 가동됩니다.
