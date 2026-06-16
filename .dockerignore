@@ -1,0 +1,10 @@
+__pycache__
+*.pyc
+.env
+.git
+.gitignore
+*.md
+week09*
+week10*
+week11*
+week12*
