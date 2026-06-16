@@ -217,9 +217,12 @@ function biasBarMini(ml) {
 
 function renderMainCard(art, el) {
     const barHTML = biasBarMini(art.ml_analysis);
+    const imgHTML = art.image_url 
+        ? `<img class="main-card-thumb" src="${art.image_url}" alt="news image" onerror="this.outerHTML='${placeholderHTML(art.press, art.stance, 80).replace(/'/g, "\\'")}'" />`
+        : placeholderHTML(art.press, art.stance, 80);
     el.innerHTML = `
         <div class="main-thumb-wrap">
-            ${placeholderHTML(art.press, art.stance, 80)}
+            ${imgHTML}
             <div class="main-thumb-text">
                 <div class="main-press-line"><span class="main-press">${art.press || "기타"}</span></div>
                 <div class="card-title">${art.title}</div>
@@ -254,8 +257,11 @@ function createMiniCard(art) {
     const color = stanceColor(art.stance);
     card.style.borderLeft = `3px solid ${color}`;
     const barHTML = biasBarMini(art.ml_analysis);
+    const imgHTML = art.image_url 
+        ? `<img class="mini-card-thumb" src="${art.image_url}" alt="news image" onerror="this.outerHTML='${placeholderHTML(art.press, art.stance, 48).replace(/'/g, "\\'")}'" />`
+        : placeholderHTML(art.press, art.stance, 48);
     card.innerHTML = `
-        ${placeholderHTML(art.press, art.stance, 48)}
+        ${imgHTML}
         <div class="mini-text">
             <div class="mini-title">${art.title}</div>
             <div class="mini-press">${art.press || "기타"}</div>
@@ -277,6 +283,21 @@ async function openArticle(art) {
     modalTitle.textContent = art.title;
     modalBody.textContent = art.description || "";
     modalLink.href = art.link || "#";
+
+    // Image in modal
+    let modalImg = document.getElementById("modal-image");
+    if (!modalImg) {
+        modalImg = document.createElement("img");
+        modalImg.id = "modal-image";
+        modalImg.className = "modal-article-img";
+        modalTitle.parentNode.insertBefore(modalImg, modalBody);
+    }
+    if (art.image_url) {
+        modalImg.src = art.image_url;
+        modalImg.style.display = "block";
+    } else {
+        modalImg.style.display = "none";
+    }
 
     analysisLoading.classList.remove("hidden");
     analysisContent.classList.add("hidden");

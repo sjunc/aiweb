@@ -107,6 +107,34 @@ def fetch_article_body(url: str, max_len: int = 5000) -> str | None:
     return None
 
 
+def fetch_og_image(url):
+    if not url:
+        return None
+    try:
+        resp = requests.get(url, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/120.0.0.0"
+        }, timeout=2.5)
+        resp.encoding = resp.apparent_encoding or 'utf-8'
+        html_content = resp.text
+        
+        # Try finding og:image tag with property and content in any order
+        m1 = re.search(r'<meta[^>]*property=["\']og:image["\'][^>]*content=["\']([^"\']+)["\']', html_content, re.IGNORECASE)
+        if m1:
+            return m1.group(1).strip()
+        
+        m2 = re.search(r'<meta[^>]*content=["\']([^"\']+)["\'][^>]*property=["\']og:image["\']', html_content, re.IGNORECASE)
+        if m2:
+            return m2.group(1).strip()
+            
+        m3 = re.search(r'<meta[^>]*name=["\']twitter:image["\'][^>]*content=["\']([^"\']+)["\']', html_content, re.IGNORECASE)
+        if m3:
+            return m3.group(1).strip()
+            
+        return None
+    except Exception:
+        return None
+
+
 def fetch_trending_news(client_id, client_secret, count=16, categories=None):
     if not client_id or not client_secret:
         raise ValueError("네이버 API 인증 정보가 필요합니다.")
@@ -119,21 +147,20 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
     cats = categories if categories else NEWS_CATEGORIES
 
     seen_links = set()
-    known = []
-    unknown = []
+    ordered = []
 
-    # 최대 3바퀴 순회, known 기사가 충분히 모일 때까지 수집
+    # 최대 3바퀴 순회
     for _round in range(3):
-        if len(known) >= count + 1:
+        if len(ordered) >= count + 1:
             break
         for category in cats:
-            if len(known) >= count + 1:
+            if len(ordered) >= count + 1:
                 break
             try:
                 resp = requests.get(
                     "https://openapi.naver.com/v1/search/news.json",
                     headers=headers,
-                    params={"query": category, "display": 20, "sort": "date"},
+                    params={"query": category, "display": 20, "sort": "sim"},
                     timeout=8
                 )
                 if resp.status_code != 200:
@@ -153,15 +180,28 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
                             "pubDate": item.get("pubDate", ""),
                             "category": category,
                         }
-                        if stance != 'unknown':
-                            known.append(article)
-                        else:
-                            unknown.append(article)
+                        ordered.append(article)
             except requests.RequestException:
                 continue
 
-    # known 우선, 부족하면 unknown으로 채움
-    ordered = known + unknown
+    # Slice items
     main = ordered[0] if ordered else None
     subs = ordered[1:1 + count] if len(ordered) > 1 else []
+
+    # Fetch og:image in parallel using ThreadPoolExecutor
+    import concurrent.futures
+    all_selected = [main] + subs
+    all_selected = [a for a in all_selected if a]
+
+    if all_selected:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            future_to_art = {executor.submit(fetch_og_image, art.get("link")): art for art in all_selected}
+            for future in concurrent.futures.as_completed(future_to_art):
+                art = future_to_art[future]
+                try:
+                    img_url = future.result()
+                    art["image_url"] = img_url
+                except Exception:
+                    art["image_url"] = None
+
     return {"main": main, "subs": subs}
