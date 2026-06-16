@@ -35,7 +35,7 @@ except ImportError:
     print("[INFO] ml_classifier.py 없음. ML 분석 불가.")
 
 app = FastAPI(
-    title="Filter Bubble Breaker",
+    title="뉴스밸런스 (NewsBalance)",
     description="뉴스 기사 정치 성향 분석 (ML 기반 % + Gemini 논평)",
     version="4.0.0",
 )

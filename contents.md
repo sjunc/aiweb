@@ -1,4 +1,4 @@
-# Filter Bubble Breaker (필터 버블 브레이커)
+# 뉴스밸런스 (NewsBalance)
 
 > 11주차 — 기말 프로젝트 한 장 요약.
 
