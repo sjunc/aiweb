@@ -147,33 +147,95 @@ section p {
   font-size: 1.05rem;
 }
 
-/* ============ Tech Stack ============ */
-.stack {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-.stack li {
-  background: var(--card);
-  border: 1px solid var(--border);
-  padding: 0.5rem 1rem;
-  border-radius: 999px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--accent2);
-}
-
-/* ============ 어떻게 만들었나 ============ */
-.howto p {
-  background: var(--card);
-  border-left: 4px solid var(--accent);
-  padding: 1.2rem 1.4rem;
-  border-radius: 6px;
+/* ============ Content (contents.md 인라인 렌더) ============ */
+.content zero-md {
+  display: block;
   color: var(--ink);
-  margin: 0;
+  background: transparent;
+}
+.content zero-md .markdown-body,
+.content zero-md > div {
+  background: transparent !important;
+  color: var(--ink);
+}
+.content zero-md h1,
+.content zero-md h2 {
+  font-size: clamp(1.3rem, 1rem + 1vw, 1.7rem);
+  font-weight: 700;
+  margin: 2.2rem 0 0.8rem;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.content zero-md h1:first-child,
+.content zero-md h2:first-child {
+  margin-top: 0;
+}
+.content zero-md h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 1.4rem 0 0.5rem;
+  color: var(--ink);
+}
+.content zero-md p {
+  font-size: 1rem;
+  color: var(--ink);
+  margin: 0.5rem 0 1rem;
+  line-height: 1.65;
+}
+.content zero-md ul {
+  margin: 0.5rem 0 1rem;
+  padding-left: 1.4rem;
+  font-size: 1rem;
+}
+.content zero-md li {
+  margin: 0.35rem 0;
+  color: var(--ink);
+  line-height: 1.55;
+}
+.content zero-md li input[type="checkbox"] {
+  margin-right: 0.5rem;
+}
+.content zero-md code {
+  background: rgba(14, 165, 233, 0.1);
+  color: var(--accent2);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-family: Menlo, Monaco, 'Courier New', monospace;
+  font-size: 0.88em;
+}
+.content zero-md table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.8rem 0 1.4rem;
+  font-size: 0.95rem;
+  background: transparent;
+}
+.content zero-md th,
+.content zero-md td {
+  border: 1px solid var(--border);
+  padding: 0.6rem 0.9rem;
+  text-align: left;
+  vertical-align: top;
+  background: transparent;
+}
+.content zero-md th {
+  background: rgba(249, 115, 22, 0.08);
+  font-weight: 600;
+}
+.content zero-md hr {
+  border: none;
+  height: 0;
+  margin: 2rem 0;
+}
+.content zero-md blockquote {
+  border-left: 3px solid var(--accent2);
+  margin: 0.8rem 0;
+  padding: 0.4rem 1rem;
+  color: var(--muted);
+}
+.content zero-md strong {
+  color: var(--ink);
+  font-weight: 700;
 }
 
 /* ============ Comments ============ */
