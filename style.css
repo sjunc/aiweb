@@ -176,6 +176,8 @@ body {
 
 /* ============ VINTAGE SCREENSHOT FRAME ============ */
 .main-screenshot-section {
+  display: flex;
+  justify-content: center;
   margin-bottom: 2.5rem;
 }
 
@@ -184,6 +186,8 @@ body {
   padding: 8px;
   background-color: white;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  max-width: 750px;
+  width: 100%;
 }
 
 .main-screenshot {
@@ -211,12 +215,51 @@ body {
   padding-top: 2rem;
 }
 
-/* Quote Block */
-.quote-block {
+/* Quote Block & Portrait Container */
+.quote-container {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
   border-top: 3px double var(--border);
   border-bottom: 3px double var(--border);
   padding: 1.5rem 1rem;
-  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.quote-portrait-box {
+  flex-shrink: 0;
+  width: 110px;
+  height: 110px;
+  border: 1px solid var(--border);
+  padding: 4px;
+  background-color: white;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 2px 2px 0px var(--border);
+}
+
+.quote-portrait-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  filter: grayscale(100%) contrast(120%) sepia(10%);
+}
+
+.quote-block {
+  flex: 1;
+  text-align: left;
+}
+
+@media (max-width: 680px) {
+  .quote-container {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+  .quote-block {
+    text-align: center;
+  }
 }
 
 .quote-text {

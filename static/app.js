@@ -206,6 +206,10 @@ function placeholderHTML(press, stance, size) {
     return `<span class="thumb-placeholder" style="width:${size}px;height:${size}px;background:${color}20;color:${color};border:1px solid ${color}40;font-size:${Math.round(size*0.38)}px;">${s}</span>`;
 }
 
+window.handleImageError = function(img, press, stance, size) {
+    img.outerHTML = placeholderHTML(press, stance, size);
+};
+
 function biasBarMini(ml) {
     if (!ml) return "";
     const p = ml.progressive || 0;
@@ -218,7 +222,7 @@ function biasBarMini(ml) {
 function renderMainCard(art, el) {
     const barHTML = biasBarMini(art.ml_analysis);
     const imgHTML = art.image_url 
-        ? `<img class="main-card-thumb" src="${art.image_url}" alt="news image" onerror="this.outerHTML='${placeholderHTML(art.press, art.stance, 80).replace(/'/g, "\\'")}'" />`
+        ? `<img class="main-card-thumb" src="${art.image_url}" alt="news image" onerror="handleImageError(this, '${(art.press || "기타").replace(/'/g, "\\'")}', '${art.stance}', 80)" />`
         : placeholderHTML(art.press, art.stance, 80);
     el.innerHTML = `
         <div class="main-thumb-wrap">
@@ -258,7 +262,7 @@ function createMiniCard(art) {
     card.style.borderLeft = `3px solid ${color}`;
     const barHTML = biasBarMini(art.ml_analysis);
     const imgHTML = art.image_url 
-        ? `<img class="mini-card-thumb" src="${art.image_url}" alt="news image" onerror="this.outerHTML='${placeholderHTML(art.press, art.stance, 48).replace(/'/g, "\\'")}'" />`
+        ? `<img class="mini-card-thumb" src="${art.image_url}" alt="news image" onerror="handleImageError(this, '${(art.press || "기타").replace(/'/g, "\\'")}', '${art.stance}', 48)" />`
         : placeholderHTML(art.press, art.stance, 48);
     card.innerHTML = `
         ${imgHTML}
