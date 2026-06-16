@@ -1,7 +1,7 @@
 services:
   app:
     build: .
-    container_name: filter-bubble-breaker
+    container_name: newsbalance
     restart: unless-stopped
     ports:
       - "8000:8000"
