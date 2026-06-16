@@ -22,115 +22,98 @@
       </div>
     </header>
 
-    <!-- ============ MAIN NEWSPAPER CONTENT ============ -->
-    <div class="main-news-grid">
-      
-      <!-- LEFT COLUMN: Lead Article -->
-      <article class="article-col">
-        <h2 class="lead-headline">
-          "진실을 추구함에 있어 우리는 편향되지 않아야 하지만, 진실을 발견했을 때 우리는 결코 중립적일 수 없다."
-        </h2>
-        <div class="lead-subheadline">
-          — 전설적인 저널리스트 월터 크론카이트(Walter Cronkite)의 신념을 잇는 뉴스 편향성 이원 분석기
-        </div>
+    <!-- ============ TOP ACTION BUTTONS (Demo & Source) ============ -->
+    <section class="top-cta-bar">
+      <a class="newspaper-btn btn-primary" href="https://s12-demo.aiweb2026.site" target="_blank" rel="noopener">
+        ▶ Live Demo (데모 실행하기)
+      </a>
+      <a class="newspaper-btn btn-secondary" href="https://github.com/sjunc/aiweb" target="_blank" rel="noopener">
+        ⌨ Github Source (소스 코드 보기)
+      </a>
+    </section>
 
-        <div class="article-body-columns">
-          <p class="news-p lead-paragraph">
-            가짜 뉴스 뿐만이 아니라 편향된 뉴스로 현재 대한민국은 언론의 도마 위에 있습니다. 언론의 편중과 확증 편향은 독자들로 하여금 하나의 좁은 버블(Filter Bubble) 속에 갇히게 만들고 있습니다. 
+    <!-- ============ LARGE FRONT-PAGE SCREENSHOT ============ -->
+    <section class="main-screenshot-section">
+      <div class="vintage-frame">
+        <img class="main-screenshot" src="screenshot.png" alt="NewsBalance Dashboard Mockup" />
+        <div class="image-caption">대시보드 분석 화면: 기사의 실시간 정치 성향 스펙트럼(%) 시각화 및 AI 종합 논평 보고서 예시.</div>
+      </div>
+    </section>
+
+    <!-- ============ EDITORIAL CONTENT (Single Column) ============ -->
+    <main class="editorial-stack">
+      
+      <!-- Walter Cronkite Famous Quote -->
+      <div class="quote-block">
+        <div class="quote-text">
+          "진실을 추구함에 있어 우리는 편향되지 않아야 하지만, <br class="desktop-only">진실을 발견했을 때 우리는 결코 중립적일 수 없다."
+        </div>
+        <div class="quote-text-en">
+          "In pursuit of the truth, we must be unbiased, but when we find it, we cannot be neutral."
+        </div>
+        <div class="quote-author">— 월터 크론카이트 (Walter Cronkite)</div>
+      </div>
+
+      <!-- Introduction Article -->
+      <article class="lead-article">
+        <h2 class="article-headline">가짜 뉴스를 넘어 편향을 분석하다</h2>
+        <div class="article-body">
+          <p class="news-paragraph lead-p">
+            가짜 뉴스 뿐만이 아니라 편향된 뉴스로 현재 대한민국은 언론의 도마 위에 있습니다. 이러한 현실에 입각하여 본 프로젝트는 독자들이 특정 진영의 생각에 갇히는 필터 버블(Filter Bubble) 현상을 깨뜨리고자 기획되었습니다.
           </p>
-          <p class="news-p">
-            이러한 현실에 입각하여 독자들에게 보다 객관적이고 균형 잡힌 뉴스를 전달하고, 미디어에 내재된 숨겨진 성향을 직관적으로 드러냄으로써 문제를 해결하고자 본 프로젝트를 만들었습니다.
+          <p class="news-paragraph">
+            저희 <strong>'뉴스밸런스 (NewsBalance)'</strong>는 주요 신문사를 통해 수집된 뉴스를 대상으로 작동하며, 무조건적인 가짜 뉴스 배제와 더불어 하나의 시사 이슈에 대해 다각적인 관점을 비교하여 볼 수 있는 기회를 선사합니다.
           </p>
-          <p class="news-p">
-            저희 서비스는 주요 언론사의 뉴스를 통해 최대한 검증되지 않은 가짜 뉴스는 배제하고, 나아가 하나의 사건에 대한 관점을 여럿으로 보여줍니다. 
+          <p class="news-paragraph">
+            모든 수집 기사에 대해서는 사전 학습을 통하여 분리한 어휘 및 표현적 기준 데이터를 토대로 머신러닝 분류 알고리즘이 동작하며, 해당 기사가 진보·중도·보수 중 어느 성향에 가까운지를 분석하여 직관적인 백분율(%)로 표기합니다.
           </p>
-          <p class="news-p">
-            각각의 뉴스 기사에 대해서는 사전 학습을 통해 정교하게 분리한 어휘 및 표현 기준을 잡아서, 해당 기사가 어떤 정치적 성향(진보·중도·보수)에 가까운지를 분석하고 비율(%)로 표시합니다.
+          <p class="news-paragraph">
+            원하는 뉴스를 클릭하면 단순 수치 분석을 넘어, 편향성 완화를 위해 해당 뉴스를 균형 잡힌 시각에서 바라볼 수 있도록 보조하는 AI(Gemini) 종합 리포트 및 질의응답 챗봇 시스템을 함께 가동합니다.
           </p>
-          <p class="news-p">
-            뉴스를 클릭하면 해당 뉴스에 대한 한쪽으로 쏠리지 않은 편향되지 않은 시선으로 기사를 다각도에서 읽어볼 수 있도록 보조합니다. 
-          </p>
-          <p class="news-p">
-            해당 프로젝트는 단순히 한국어 뉴스를 분석하는 수준을 넘어서, 향후 해외 각국(특히 각 국가의 자국 시선)의 관점으로도 뉴스를 바라볼 수 있도록 다국적 시점을 제공하고자 합니다.
-          </p>
-          <p class="news-p">
-            저희의 독자들이 편향의 버블을 깨고, 향후 더 넓게 이 세계라는 거대한 그림 속에서 다양한 길을 발견하기를 간절히 바랍니다.
+          <p class="news-paragraph">
+            본 프로젝트는 차후 한국을 넘어 해외 각국으로 대상을 확장하여, 각 국가별 고유한 자국 시선으로도 글로벌 뉴스를 교차 감상할 수 있는 다각화된 뷰를 제시하고자 합니다. 독자 여러분이 이 거대한 세계 속에서 편향되지 않은 넓고 올바른 시야를 발견할 수 있기를 기대합니다.
           </p>
         </div>
       </article>
 
-      <!-- RIGHT COLUMN: Side Bar with Photos, Quotes, and Coupon CTA -->
-      <aside class="side-bar">
-        
-        <!-- Walter Cronkite Picture -->
-        <div class="portrait-container">
-          <img class="portrait-photo" src="walter_cronkite.jpg" alt="Walter Cronkite, 1985" />
-          <div class="portrait-caption">미국에서 가장 신뢰받는 앵커였던 월터 크론카이트(Walter Cronkite). 취재 과정에서의 객관성과 진실 앞에서의 당당함을 상징한다.</div>
+      <!-- Walter Cronkite Portrait -->
+      <section class="portrait-section">
+        <div class="portrait-box">
+          <img class="portrait-img" src="walter_cronkite.jpg" alt="Walter Cronkite, 1985" />
+          <div class="portrait-cap">전설적인 앵커 월터 크론카이트. 편향되지 않는 취재 객관성과 진실 앞에서의 독립성을 상징한다.</div>
         </div>
+      </section>
 
-        <!-- Famous Quote Box -->
-        <div class="quote-box">
-          <div class="quote-text">
-            "In pursuit of the truth, we must be unbiased, but when we find it, we cannot be neutral."
-          </div>
-          <div class="quote-author">— Walter Cronkite</div>
-        </div>
+    </main>
 
-        <!-- Modern Front-page Engraving (App Screenshot) -->
-        <div class="portrait-container">
-          <img class="portrait-photo" src="screenshot.png" alt="NewsBalance Dashboard Mockup" />
-          <div class="portrait-caption">특별 삽화: 실시간 뉴스 어휘 분석 및 Gemini 해설 대시보드 화면(예시).</div>
-        </div>
-
-        <!-- Vintage Advertisement Coupon for CTA -->
-        <div class="coupon-cta-box">
-          <div class="coupon-badge">Special Bulletin</div>
-          <div class="coupon-title">데모 실행 및 코드 검사</div>
-          <div class="coupon-buttons">
-            <a class="coupon-btn coupon-btn-primary" href="https://s12-demo.aiweb2026.site" target="_blank" rel="noopener">
-              ▶ Live Demo
-            </a>
-            <a class="coupon-btn coupon-btn-secondary" href="https://github.com/sjunc/aiweb" target="_blank" rel="noopener">
-              ⌨ Github Source
-            </a>
-          </div>
-        </div>
-
-      </aside>
-
-    </div>
-
-    <!-- ============ TECHNICAL REPORT SECTION ============ -->
-    <section class="tech-report-section">
-      <h2 class="tech-report-title">Technical Composition &amp; System Architecture</h2>
-      <div class="tech-section-grid">
-        
-        <!-- Tech Stack -->
-        <div class="tech-column">
-          <h3 class="tech-sub-title">1. 기술 명세 및 시스템 스택</h3>
+    <!-- ============ TECHNICAL SPECIFICATIONS ============ -->
+    <section class="technical-report">
+      <h2 class="tech-title">Technical Composition &amp; System Architecture</h2>
+      
+      <div class="tech-grid">
+        <div class="tech-card">
+          <h3 class="tech-sub-title">1. 기술 스택 &amp; 시스템 설계</h3>
           <ul class="tech-list">
-            <li><strong>UI Framework:</strong> FastAPI (Uvicorn) 백엔드와 HTML5/CSS3 (Glassmorphism 다크 테마) 및 Vanilla JS 기반의 반응형 프론트엔드로 구현.</li>
-            <li><strong>ML Classifier:</strong> 26개 주요 언론사 기사 데이터셋을 활용해 어휘(TF-IDF N-grams), 표현 특징, LDA 토픽 모델링을 반영하여 Logistic Regression 분류기로 학습. 모델 파일 크기 245KB (`bias_model.pkl`).</li>
-            <li><strong>Generative AI:</strong> `google-genai` 라이브러리를 활용해 Gemini 2.5 Flash API 연동. 기사 편향 포인트 분석, 타 성향 언론사 관점 비교, 팩트체크 리포트 생성 및 실시간 패널 챗봇 질의응답 구현.</li>
-            <li><strong>Data Source:</strong> 네이버 뉴스 OpenAPI를 통해 실시간 트렌딩 뉴스를 카테고리별로 자동 수집 및 추출.</li>
+            <li><strong>프론트엔드/백엔드:</strong> FastAPI (Uvicorn) 비동기 백엔드 서버 + 반응형 HTML5/CSS3 (Glassmorphism 다크 테마) 및 Vanilla JS 구현.</li>
+            <li><strong>머신러닝 분류기:</strong> 26개 주요 언론사 기사 데이터를 학습한 Logistic Regression 분류기 탑재. TF-IDF 어휘 특징과 LDA 토픽 모델링 데이터를 기반으로 기사 성향을 실시간 백분율(%)화. 모델 크기 245KB (`bias_model.pkl`).</li>
+            <li><strong>생성 AI 모델:</strong> `google-genai` 최신 라이브러리로 Gemini 2.5 Flash API 연동. 편향성 경고, 타 언론사 비교, 팩트체크 리포트 작성 및 질의응답 챗봇 기능 수행.</li>
+            <li><strong>외부 API 연동:</strong> 네이버 뉴스 OpenAPI를 통하여 시사/정치/국제 카테고리별 실시간 뉴스를 주기적으로 수집 및 파싱.</li>
           </ul>
         </div>
 
-        <!-- Completion & Verification -->
-        <div class="tech-column">
-          <h3 class="tech-sub-title">2. 인프라 배포 및 완료 조건</h3>
+        <div class="tech-card">
+          <h3 class="tech-sub-title">2. 배포 및 완료 조건</h3>
           <ul class="tech-list">
-            <li><strong>완료 조건:</strong> 사용자가 뉴스 기사를 선택하면 10초 이내에 기사의 진보/중도/보수 비율(%)이 그래프로 나타나고, Gemini가 생성한 4개 분석 리포트가 화면에 렌더링되며, 챗봇을 통해 실시간 질의응답이 가능하다.</li>
-            <li><strong>인프라 및 배포 트랙:</strong> AWS EC2 (Ubuntu 22.04 LTS) 인스턴스에 탄력적 IP를 매핑하고, Docker Compose를 사용하여 FastAPI 컨테이너와 Nginx 웹 프록시 서버를 통합 가동.</li>
-            <li><strong>CI/CD 파이프라인:</strong> GitHub Actions 워크플로우를 활용해 코드 push 시 SSH 원격 명령으로 서버 무중단 배포 구현.</li>
-            <li><strong>12주차 n8n 자동화:</strong> 동일한 AWS EC2 서버 환경 하에 Docker Compose 및 Caddy를 묶어 n8n 워크플로우 자동화 엔진 병행 구축.</li>
+            <li><strong>완료 조건:</strong> 뉴스 리스트의 기사를 클릭했을 때, 10초 이내에 기사의 진보/중도/보수 분석 그래프가 나타나고 Gemini의 4대 편향 종합 보고서 및 AI 질의응답 기능이 화면에 지연 없이 렌더링된다.</li>
+            <li><strong>클라우드 인프라:</strong> AWS EC2 (Ubuntu 22.04 LTS) 가상 서버 환경에 탄력적 IP(Elastic IP)를 매핑하고, Docker Compose를 사용하여 FastAPI 컨테이너와 Nginx 웹 프록시 서버를 기동.</li>
+            <li><strong>CI/CD 자동화:</strong> GitHub Actions 워크플로우를 활용해 코드 push 시 SSH 원격 접속 후 자동으로 Nginx와 앱 서비스를 무중단 빌드 및 재실행.</li>
+            <li><strong>n8n 워크플로우 서버:</strong> 동일한 AWS EC2 서버 환경 위에 Docker Compose 및 Caddy를 묶어 12주차 n8n 자동화 인프라 서버를 병행 가동.</li>
           </ul>
         </div>
-
       </div>
     </section>
 
-    <!-- ============ GISCUS COMMENTS SECTION ============ -->
+    <!-- ============ GISCUS COMMENTS ============ -->
     <section class="comments-section" id="comments">
       <h2 class="comments-title">💬 Reader Comments</h2>
       <div class="giscus"></div>
@@ -153,7 +136,7 @@
 
   </div>
 
-  <!-- Vintage Footer -->
+  <!-- Footer -->
   <footer class="vintage-footer">
     2026 AI 웹 융합 · 9-12주차 통합 포트폴리오 · <a href="https://aiweb2026.site">aiweb2026.site</a>
   </footer>

@@ -2,12 +2,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,400;1,700&family=UnifrakturMaguntia&family=Noto+Serif+KR:wght@400;500;700&display=swap');
 
 :root {
-  --paper: #f6f3eb; /* Aged paper color */
+  --paper: #f6f3eb; /* Aged parchment color */
   --ink: #1c1b18;   /* Faded black ink */
-  --ink-muted: #53514a;
+  --ink-muted: #5e5b53;
   --border: #2c2a26;
   --accent: #8c2525; /* Vintage Red */
   --highlight: #ede8dd;
+  --container-max: 820px; /* Highly readable width for single column */
 }
 
 body {
@@ -16,15 +17,15 @@ body {
   background-color: var(--paper);
   color: var(--ink);
   font-family: 'Noto Serif KR', Georgia, serif;
-  line-height: 1.6;
+  line-height: 1.75;
   -webkit-font-smoothing: antialiased;
 }
 
 /* Base Container */
 .container {
-  max-width: 1000px;
+  max-width: var(--container-max);
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: 2.5rem 1.5rem;
 }
 
 /* ============ MASTHEAD (Newspaper Header) ============ */
@@ -46,9 +47,9 @@ body {
 
 .masthead-title {
   font-family: 'UnifrakturMaguntia', serif;
-  font-size: clamp(3rem, 7vw, 5.5rem);
+  font-size: clamp(3.2rem, 8vw, 5.8rem);
   line-height: 1.1;
-  margin: 0.5rem 0;
+  margin: 0.4rem 0;
   font-weight: normal;
   color: var(--ink);
 }
@@ -73,253 +74,257 @@ body {
   }
 }
 
-/* ============ NEWSPAPER LAYOUT ============ */
-.main-news-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-}
-
-@media (max-width: 768px) {
-  .main-news-grid {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-}
-
-.article-col {
-  display: flex;
-  flex-direction: column;
-}
-
-/* Main Lead Article */
-.lead-headline {
-  font-family: 'Playfair Display', serif;
-  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
-  font-weight: 800;
-  line-height: 1.15;
-  margin: 0 0 1rem 0;
-  letter-spacing: -0.01em;
-  color: var(--ink);
-}
-
-.lead-subheadline {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.1rem;
-  font-style: italic;
-  color: var(--ink-muted);
-  margin-bottom: 1.5rem;
-  line-height: 1.4;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 1rem;
-}
-
-.article-body-columns {
-  column-count: 2;
-  column-gap: 1.5rem;
-  column-rule: 1px solid var(--border);
-  text-align: justify;
-}
-
-@media (max-width: 600px) {
-  .article-body-columns {
-    column-count: 1;
-  }
-}
-
-.lead-paragraph::first-letter {
-  float: left;
-  font-size: 3.5rem;
-  line-height: 0.8;
-  padding-top: 4px;
-  padding-right: 8px;
-  padding-left: 3px;
-  font-family: 'Playfair Display', serif;
-  font-weight: bold;
-}
-
-.news-p {
-  margin: 0 0 1rem 0;
-  font-size: 0.95rem;
-  text-indent: 1.5rem;
-}
-
-.news-p:first-of-type {
-  text-indent: 0;
-}
-
-/* Side Column */
-.side-bar {
-  border-left: 1px solid var(--border);
-  padding-left: 1.5rem;
-}
-
-@media (max-width: 768px) {
-  .side-bar {
-    border-left: none;
-    padding-left: 0;
-    border-top: 1px solid var(--border);
-    padding-top: 1.5rem;
-  }
-}
-
-.portrait-container {
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-
-.portrait-photo {
-  width: 100%;
-  max-width: 280px;
-  height: auto;
-  border: 1px solid var(--border);
-  padding: 4px;
-  background-color: white;
-  filter: grayscale(100%) contrast(120%) sepia(10%);
-}
-
-.portrait-caption {
-  font-size: 0.75rem;
-  font-style: italic;
-  color: var(--ink-muted);
-  margin-top: 0.4rem;
-  line-height: 1.3;
-}
-
-.quote-box {
-  border-top: 3px double var(--border);
-  border-bottom: 3px double var(--border);
-  padding: 1rem 0.5rem;
-  margin: 1.5rem 0;
-  text-align: center;
-}
-
-.quote-text {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.15rem;
-  font-style: italic;
-  line-height: 1.4;
-  margin-bottom: 0.5rem;
-}
-
-.quote-author {
-  font-family: 'Playfair Display', serif;
-  font-size: 0.85rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* ============ VINTAGE COUPON CTA (Live Demo & GitHub) ============ */
-.coupon-cta-box {
-  border: 2px dashed var(--border);
-  background-color: var(--highlight);
-  padding: 1.5rem;
-  margin: 2.5rem 0;
-  text-align: center;
-  position: relative;
-}
-
-.coupon-badge {
-  position: absolute;
-  top: -12px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: var(--accent);
-  color: white;
-  padding: 2px 10px;
-  font-size: 0.65rem;
-  font-family: 'Playfair Display', serif;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-weight: bold;
-}
-
-.coupon-title {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.25rem;
-  font-weight: bold;
-  text-transform: uppercase;
-  margin-bottom: 1rem;
-  letter-spacing: 0.05em;
-}
-
-.coupon-buttons {
+/* ============ TOP ACTION BUTTONS ============ */
+.top-cta-bar {
   display: flex;
   justify-content: center;
   gap: 1.5rem;
   flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-.coupon-btn {
+@media (max-width: 480px) {
+  .top-cta-bar {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+}
+
+.newspaper-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.6rem 1.5rem;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.8rem 2rem;
   font-family: 'Playfair Display', serif;
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: bold;
   text-decoration: none;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   transition: all 0.2s ease;
+  border: 1px solid var(--border);
+  box-shadow: 2px 2px 0px var(--border);
 }
 
-.coupon-btn-primary {
+.newspaper-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.newspaper-btn.btn-primary {
   background-color: var(--ink);
   color: var(--paper);
-  border: 1px solid var(--ink);
 }
 
-.coupon-btn-primary:hover {
+.newspaper-btn.btn-primary:hover {
   background-color: var(--accent);
+  color: white;
   border-color: var(--accent);
 }
 
-.coupon-btn-secondary {
+.newspaper-btn.btn-secondary {
   background-color: transparent;
   color: var(--ink);
+}
+
+.newspaper-btn.btn-secondary:hover {
+  background-color: var(--highlight);
+}
+
+/* ============ VINTAGE SCREENSHOT FRAME ============ */
+.main-screenshot-section {
+  margin-bottom: 2.5rem;
+}
+
+.vintage-frame {
+  border: 1px solid var(--border);
+  padding: 8px;
+  background-color: white;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.main-screenshot {
+  display: block;
+  width: 100%;
+  height: auto;
   border: 1px solid var(--border);
 }
 
-.coupon-btn-secondary:hover {
-  border-color: var(--ink);
-  background-color: rgba(28, 27, 24, 0.05);
+.image-caption {
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--ink-muted);
+  text-align: center;
+  margin-top: 0.6rem;
+  line-height: 1.4;
 }
 
-/* ============ TECHNICAL REPORT ============ */
-.tech-report-title {
-  font-family: 'Playfair Display', serif;
+/* ============ EDITORIAL STACK (Single Column) ============ */
+.editorial-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 2rem;
+}
+
+/* Quote Block */
+.quote-block {
+  border-top: 3px double var(--border);
+  border-bottom: 3px double var(--border);
+  padding: 1.5rem 1rem;
   text-align: center;
-  font-size: 1.8rem;
+}
+
+.quote-text {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+  line-height: 1.4;
+  margin-bottom: 0.6rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.quote-text-en {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  font-style: italic;
+  line-height: 1.4;
+  margin-bottom: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.quote-author {
+  font-family: 'Playfair Display', serif;
+  font-size: 0.9rem;
+  font-weight: bold;
   text-transform: uppercase;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 0.5rem;
-  margin: 3rem 0 1.5rem;
   letter-spacing: 0.05em;
 }
 
-.tech-section-grid {
+/* Article Headline & Body */
+.lead-article {
+  text-align: left;
+}
+
+.article-headline {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 0 0 1.5rem 0;
+  color: var(--ink);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+
+.article-body {
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+.news-paragraph {
+  margin: 0 0 1.2rem 0;
+  text-indent: 1.5rem;
+  text-align: justify;
+}
+
+.news-paragraph.lead-p {
+  text-indent: 0;
+}
+
+.news-paragraph.lead-p::first-letter {
+  float: left;
+  font-size: 4.2rem;
+  line-height: 0.75;
+  padding-top: 6px;
+  padding-right: 10px;
+  padding-left: 2px;
+  font-family: 'Playfair Display', serif;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.desktop-only {
+  display: block;
+}
+
+@media (max-width: 576px) {
+  .desktop-only {
+    display: none;
+  }
+}
+
+/* Portrait Section */
+.portrait-section {
+  display: flex;
+  justify-content: center;
+  margin: 1rem 0;
+}
+
+.portrait-box {
+  border: 1px solid var(--border);
+  padding: 6px;
+  background-color: white;
+  text-align: center;
+  max-width: 380px;
+}
+
+.portrait-img {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  filter: grayscale(100%) contrast(120%) sepia(10%);
+}
+
+.portrait-cap {
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--ink-muted);
+  margin-top: 0.5rem;
+  line-height: 1.3;
+}
+
+/* ============ TECHNICAL SPECIFICATIONS ============ */
+.technical-report {
+  border-top: 4px double var(--border);
+  margin-top: 3rem;
+  padding-top: 2rem;
+}
+
+.tech-title {
+  font-family: 'Playfair Display', serif;
+  text-align: center;
+  font-size: 1.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1.8rem;
+}
+
+.tech-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
 }
 
 @media (max-width: 768px) {
-  .tech-section-grid {
+  .tech-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
 }
 
-.tech-column {
+.tech-card {
   border-top: 1px solid var(--border);
   padding-top: 1rem;
 }
 
 .tech-sub-title {
   font-family: 'Playfair Display', serif;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   text-transform: uppercase;
   margin-top: 0;
   margin-bottom: 1rem;
@@ -333,9 +338,9 @@ body {
 }
 
 .tech-list li {
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  line-height: 1.5;
+  font-size: 0.92rem;
+  margin-bottom: 0.6rem;
+  line-height: 1.6;
 }
 
 .tech-list li strong {
@@ -345,17 +350,17 @@ body {
 /* ============ GISCUS SECTION ============ */
 .comments-section {
   border-top: 4px double var(--border);
-  margin-top: 3rem;
+  margin-top: 3.5rem;
   padding-top: 2rem;
 }
 
 .comments-title {
   font-family: 'Playfair Display', serif;
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 /* ============ FOOTER ============ */
