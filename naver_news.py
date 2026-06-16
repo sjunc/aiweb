@@ -152,6 +152,9 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
     seen_links = set()
     ordered = []
 
+    # 카테고리가 1개이면 다 가져오고, 여러 개이면 카테고리당 개수를 제한해 골고루 섞음
+    per_cat_limit = 20 if len(cats) == 1 else 3
+
     # 최대 3바퀴 순회
     for _round in range(3):
         if len(ordered) >= count + 1:
@@ -163,12 +166,16 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
                 resp = requests.get(
                     "https://openapi.naver.com/v1/search/news.json",
                     headers=headers,
-                    params={"query": category, "display": 20, "sort": "sim"},
+                    params={"query": category, "display": 15, "sort": "sim"},
                     timeout=8
                 )
                 if resp.status_code != 200:
                     continue
+                
+                added_for_this_cat = 0
                 for item in resp.json().get("items", []):
+                    if added_for_this_cat >= per_cat_limit:
+                        break
                     link = item.get("originallink") or item.get("link")
                     if link and link not in seen_links:
                         seen_links.add(link)
@@ -184,6 +191,7 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
                             "category": category,
                         }
                         ordered.append(article)
+                        added_for_this_cat += 1
             except requests.RequestException:
                 continue
 
