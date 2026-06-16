@@ -85,6 +85,9 @@ def fetch_article_body(url: str, max_len: int = 5000) -> str | None:
 
     # 공통 article 영역 패턴
     patterns = [
+        r'<div[^>]*id=["\']?dic_area["\']?[^>]*>(.*?)</div>',
+        r'<div[^>]*id=["\']?articleBodyContents["\']?[^>]*>(.*?)</div>',
+        r'<div[^>]*class=["\'][^"\']*article_view[^"\']*["\'][^>]*>(.*?)</div>',
         r'<article[^>]*>(.*?)</article>',
         r'<div[^>]*id=["\']?articleBody["\']?[^>]*>(.*?)</div>',
         r'<div[^>]*id=["\']?newsEndContents["\']?[^>]*>(.*?)</div>',

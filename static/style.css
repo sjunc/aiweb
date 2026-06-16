@@ -461,3 +461,29 @@ body {
     .info-section { padding: 2rem 1rem; }
     .subscribe-section { padding: 3rem 1rem; }
 }
+
+/* ── Alternative Headlines ── */
+.headline-compare-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.hl-badge {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.4rem;
+    border-radius: 3px;
+    color: #ffffff;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+    line-height: 1.2;
+}
+.hl-badge.hl-neutral { background-color: var(--color-neutral); }
+.hl-badge.hl-prog { background-color: var(--color-progressive); }
+.hl-badge.hl-cons { background-color: var(--color-conservative); }
+.hl-text {
+    font-size: 0.8rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+}

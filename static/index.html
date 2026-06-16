@@ -85,7 +85,7 @@
     </section>
 
     <footer class="footer">
-        <p>뉴스밸런스 (NewsBalance) &mdash; 뉴스 편향 분석 프로젝트</p>
+        <p>뉴스밸런스 (NewsBalance) &mdash; 뉴스 편향 분석 프로젝트 (<a href="https://s12.aiweb2026.site" style="color: inherit; text-decoration: underline;">s12.aiweb2026.site</a>)</p>
     </footer>
 
     <!-- Modal -->
@@ -125,6 +125,23 @@
                             <div class="gemini-block">
                                 <div class="gemini-label"><i class="fa-solid fa-circle-check"></i> 팩트체크</div>
                                 <div class="gemini-text" id="modal-fc"></div>
+                            </div>
+                            <div class="gemini-block">
+                                <div class="gemini-label"><i class="fa-solid fa-heading"></i> 프레이밍별 대체 헤드라인 비교</div>
+                                <div class="gemini-text">
+                                    <div class="headline-compare-item">
+                                        <span class="hl-badge hl-neutral">중립</span>
+                                        <span id="modal-hl-neutral" class="hl-text"></span>
+                                    </div>
+                                    <div class="headline-compare-item" style="margin-top:0.4rem;">
+                                        <span class="hl-badge hl-prog">진보</span>
+                                        <span id="modal-hl-prog" class="hl-text"></span>
+                                    </div>
+                                    <div class="headline-compare-item" style="margin-top:0.4rem;">
+                                        <span class="hl-badge hl-cons">보수</span>
+                                        <span id="modal-hl-cons" class="hl-text"></span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div class="modal-chat">

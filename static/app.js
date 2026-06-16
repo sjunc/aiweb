@@ -309,6 +309,9 @@ async function openArticle(art) {
     modalView.textContent = "";
     modalCompare.textContent = "";
     modalFc.textContent = "";
+    document.getElementById("modal-hl-neutral").textContent = "";
+    document.getElementById("modal-hl-prog").textContent = "";
+    document.getElementById("modal-hl-cons").textContent = "";
     modalChatMsgs.innerHTML = '<div class="chat-bubble assistant">이 기사에 대해 궁금한 점을 물어보세요.</div>';
 
     modal.classList.add("active");
@@ -346,6 +349,10 @@ function showGemini(result) {
     modalView.textContent = gem.balanced_view || "";
     modalCompare.textContent = gem.comparison || "";
     modalFc.textContent = gem.fact_check || "";
+    
+    document.getElementById("modal-hl-neutral").textContent = gem.reframed_neutral || "";
+    document.getElementById("modal-hl-prog").textContent = gem.reframed_progressive || "";
+    document.getElementById("modal-hl-cons").textContent = gem.reframed_conservative || "";
 
     ["modal-alert", "modal-view", "modal-compare", "modal-fc"].forEach((id) => {
         const el = document.getElementById(id);
@@ -354,6 +361,12 @@ function showGemini(result) {
             block.style.display = el.textContent.trim() ? "" : "none";
         }
     });
+
+    const hasHeadlines = (gem.reframed_neutral || gem.reframed_progressive || gem.reframed_conservative);
+    const hlBlock = document.getElementById("modal-hl-neutral").closest(".gemini-block");
+    if (hlBlock) {
+        hlBlock.style.display = hasHeadlines ? "" : "none";
+    }
 }
 
 function closeModal() {
