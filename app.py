@@ -14,11 +14,17 @@ load_dotenv()
 NAVER_CLIENT_ID = os.environ.get("NAVER_CLIENT_ID", "")
 NAVER_CLIENT_SECRET = os.environ.get("NAVER_CLIENT_SECRET", "")
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_API_KEY_BACKUP = os.environ.get("GEMINI_API_KEY_BACKUP", "")
+
+# API Keys list
+GEMINI_KEYS = [k for k in [GEMINI_API_KEY, GEMINI_API_KEY_BACKUP] if k]
 
 if not NAVER_CLIENT_ID or not NAVER_CLIENT_SECRET:
     print("[WARN] .env에 NAVER_CLIENT_ID / NAVER_CLIENT_SECRET이 없습니다.")
-if not GEMINI_API_KEY:
-    print("[WARN] .env에 GEMINI_API_KEY가 없습니다.")
+if not GEMINI_KEYS:
+    print("[WARN] Gemini API 키가 설정되어 있지 않습니다.")
+else:
+    print(f"[OK] {len(GEMINI_KEYS)}개의 Gemini API Key 로드 완료 (백업 자동 전환 활성화)")
 
 # ML 분류기 로드 시도 (없으면 fallback)
 ML_AVAILABLE = False
@@ -91,7 +97,7 @@ async def health():
         "status": "healthy",
         "version": "4.0.0",
         "naver_configured": bool(NAVER_CLIENT_ID),
-        "gemini_configured": bool(GEMINI_API_KEY),
+        "gemini_configured": len(GEMINI_KEYS) > 0,
         "ml_available": ML_AVAILABLE,
     }
 
@@ -128,10 +134,10 @@ async def analyze_article(req: AnalyzeRequest):
     body = naver_news.fetch_article_body(url) or description
 
     gemini_result = None
-    if GEMINI_API_KEY:
+    if GEMINI_KEYS:
         try:
             enrich = {**art, "body": body}
-            gemini_result = debate_engine.analyze_commentary(GEMINI_API_KEY, enrich, art.get("ml_analysis"))
+            gemini_result = debate_engine.analyze_commentary(GEMINI_KEYS, enrich, art.get("ml_analysis"))
         except Exception as e:
             print(f"Gemini 논평 오류: {e}")
             error_msg = str(e)
@@ -152,10 +158,10 @@ async def analyze_article(req: AnalyzeRequest):
 
 @app.post("/api/perspective")
 async def agent_perspective(req: ChatRequest):
-    if not GEMINI_API_KEY:
-        raise HTTPException(400, "Gemini API 키가 .env에 설정되지 않았습니다.")
+    if not GEMINI_KEYS:
+        raise HTTPException(400, "Gemini API 키가 설정되지 않았습니다.")
     try:
-        reply = debate_engine.respond_as_panel(GEMINI_API_KEY, req.article, req.user_message)
+        reply = debate_engine.respond_as_panel(GEMINI_KEYS, req.article, req.user_message)
         return {"reply": reply}
     except Exception as e:
         raise HTTPException(502, f"답변 생성 실패: {e}")

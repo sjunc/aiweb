@@ -46,45 +46,61 @@ COMMENTARY_PROMPT = """
 """
 
 
-def analyze_commentary(api_key: str, article: dict, ml_result: dict | None = None) -> dict:
-    """Gemini에 편향 논평만 요청 (수치 분석은 ML 모델이 담당)"""
-    if not api_key:
+def analyze_commentary(api_keys: list[str] | str, article: dict, ml_result: dict | None = None) -> dict:
+    """Gemini에 편향 논평만 요청 (수치 분석은 ML 모델이 담당, API 키 에러 시 백업 키로 자동 전환)"""
+    if isinstance(api_keys, str):
+        keys = [api_keys]
+    else:
+        keys = [k for k in api_keys if k]
+
+    if not keys:
         raise ValueError("Gemini API Key가 필요합니다.")
 
-    client = genai.Client(api_key=api_key)
-
-    prompt = COMMENTARY_PROMPT.format(
-        press=article.get("press", "알 수 없음"),
-        stance_label=article.get("stance_label", "판별불가"),
-        title=article.get("title", ""),
-        body=(article.get("body") or article.get("description", ""))[:3000],
-        progressive=ml_result.get("progressive", 0) if ml_result else 0,
-        centrist=ml_result.get("centrist", 0) if ml_result else 0,
-        conservative=ml_result.get("conservative", 0) if ml_result else 0,
-    )
-
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                temperature=0.3,
-                response_mime_type="application/json",
+    last_err = None
+    for idx, key in enumerate(keys):
+        try:
+            client = genai.Client(api_key=key)
+            prompt = COMMENTARY_PROMPT.format(
+                press=article.get("press", "알 수 없음"),
+                stance_label=article.get("stance_label", "판별불가"),
+                title=article.get("title", ""),
+                body=(article.get("body") or article.get("description", ""))[:3000],
+                progressive=ml_result.get("progressive", 0) if ml_result else 0,
+                centrist=ml_result.get("centrist", 0) if ml_result else 0,
+                conservative=ml_result.get("conservative", 0) if ml_result else 0,
             )
-        )
-        return json.loads(response.text)
-    except json.JSONDecodeError as je:
-        raise Exception(f"JSON 파싱 오류: {je}\n원문: {response.text}")
-    except Exception as e:
-        raise Exception(f"분석 중 오류: {e}")
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.3,
+                    response_mime_type="application/json",
+                )
+            )
+            return json.loads(response.text)
+        except Exception as e:
+            print(f"[WARN] Gemini Key Index {idx} 분석 실패 (재시도 중): {e}")
+            last_err = e
+            continue
+
+    raise Exception(f"모든 Gemini API Key가 실패했습니다. 마지막 오류: {last_err}")
 
 
-def respond_as_panel(api_key, article, user_message):
-    if not api_key:
+def respond_as_panel(api_keys: list[str] | str, article: dict, user_message: str) -> str:
+    """에이전트 패널 답변 생성 (API 키 에러 시 백업 키로 자동 전환)"""
+    if isinstance(api_keys, str):
+        keys = [api_keys]
+    else:
+        keys = [k for k in api_keys if k]
+
+    if not keys:
         raise ValueError("Gemini API Key가 필요합니다.")
-    client = genai.Client(api_key=api_key)
 
-    prompt = f"""
+    last_err = None
+    for idx, key in enumerate(keys):
+        try:
+            client = genai.Client(api_key=key)
+            prompt = f"""
 당신은 미디어 리터러시 교육을 위한 편향 분석 전문가입니다.
 다음 기사에 대해 사용자의 질문에 편향되지 않은 시각으로 답변하십시오.
 
@@ -101,11 +117,14 @@ def respond_as_panel(api_key, article, user_message):
 - 기사나 일반 팩트에 근거하여 단정적이고 명확한 어조('~합니다', '~입니다')로 답변하십시오.
 - 논리적이고 정중하게 2~3문장 내외로 간결하게 답변하십시오.
 """
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
-        )
-        return response.text
-    except Exception as e:
-        raise Exception(f"답변 생성 중 오류: {e}")
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt
+            )
+            return response.text
+        except Exception as e:
+            print(f"[WARN] Gemini Key Index {idx} 답변 생성 실패 (재시도 중): {e}")
+            last_err = e
+            continue
+
+    raise Exception(f"모든 Gemini API Key가 실패했습니다. 마지막 오류: {last_err}")
