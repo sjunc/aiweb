@@ -4,6 +4,13 @@ import time
 import threading
 import concurrent.futures
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+_http_session = requests.Session()
+_retries = Retry(total=2, backoff_factor=0.2, status_forcelist=[500, 502, 503, 504])
+_http_session.mount('http://', HTTPAdapter(max_retries=_retries, pool_connections=20, pool_maxsize=20))
+_http_session.mount('https://', HTTPAdapter(max_retries=_retries, pool_connections=20, pool_maxsize=20))
 from urllib.parse import urlparse
 
 STANCE_LABELS = {
@@ -110,7 +117,7 @@ def fetch_article_body(url: str, max_len: int = 5000) -> str | None:
             return _body_cache[url]
 
     try:
-        resp = requests.get(url, headers={
+        resp = _http_session.get(url, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }, timeout=4)
         html_content = resp.content.decode(resp.encoding or 'utf-8', errors='ignore')
@@ -133,7 +140,7 @@ def fetch_og_image(url):
     if not url:
         return None
     try:
-        resp = requests.get(url, headers={
+        resp = _http_session.get(url, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }, timeout=4.5)
         # apparent_encoding is extremely slow (uses chardet), just use headers encoding or utf-8
@@ -193,7 +200,7 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
         """단일 카테고리에 대한 네이버 API 호출 (병렬 실행용)"""
         results = []
         try:
-            resp = requests.get(
+            resp = _http_session.get(
                 "https://openapi.naver.com/v1/search/news.json",
                 headers=headers,
                 params={"query": category, "display": 50, "sort": "sim"},
@@ -266,7 +273,8 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
     subs = ordered[1:1 + count] if len(ordered) > 1 else []
 
     # Fetch og:image in parallel using ThreadPoolExecutor
-    all_selected = [a for a in ([main] + subs) if a]
+    mini_cards = subs[6:14] if len(subs) > 6 else []
+    all_selected = [a for a in ([main] + mini_cards) if a]
 
     if all_selected:
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
