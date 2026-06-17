@@ -104,8 +104,18 @@ def _extract_body_bs4(html_content: str, max_len: int = 5000) -> str | None:
                 text = elem.get_text(separator=' ', strip=True)
                 if len(text) > 100:
                     return text[:max_len]
+                    
+        # Fallback: combine all large <p> tags
+        p_texts = []
+        for p in soup.select('p'):
+            t = p.get_text(separator=' ', strip=True)
+            if len(t) > 30: p_texts.append(t)
+        if p_texts:
+            text = " ".join(p_texts)
+            if len(text) > 100: return text[:max_len]
     except ImportError:
         pass
+    
     return None
 
 def fetch_article_body(url: str, max_len: int = 5000) -> str | None:
@@ -158,12 +168,23 @@ def fetch_og_image(url):
         
         # Try finding og:image tag
         m1 = re.search(r'<meta[^>]*property=["\']og:image["\'][^>]*content=["\']([^"\']+)["\']', html_content, re.IGNORECASE)
-        if m1:
-            return m1.group(1).strip()
+        if m1: return html.unescape(m1.group(1))
         
         m2 = re.search(r'<meta[^>]*content=["\']([^"\']+)["\'][^>]*property=["\']og:image["\']', html_content, re.IGNORECASE)
-        if m2:
-            return m2.group(1).strip()
+        if m2: return html.unescape(m2.group(1))
+        
+        # Fallback: Parse the HTML using BS4 and grab the first large image
+        try:
+            from bs4 import BeautifulSoup
+            soup = BeautifulSoup(html_content, 'html.parser')
+            for img in soup.select('img'):
+                src = img.get('src') or img.get('data-src')
+                if src and src.startswith('http'):
+                    # Skip tracking or small icons
+                    if 'icon' in src or 'logo' in src or 'blank' in src: continue
+                    return src
+        except ImportError:
+            pass
             
         m3 = re.search(r'<meta[^>]*name=["\']twitter:image["\'][^>]*content=["\']([^"\']+)["\']', html_content, re.IGNORECASE)
         if m3:
@@ -229,20 +250,23 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
                     except Exception:
                         pass
                 
-                link = item.get("originallink") or item.get("link")
-                if link:
-                    stance, press = classify_media(link)
-                    article = {
-                        "title": clean_html(item.get("title")),
-                        "description": clean_html(item.get("description")),
-                        "link": link,
-                        "press": press,
-                        "stance": stance,
-                        "stance_label": stance_label(stance),
-                        "pubDate": pub_date_str,
-                        "category": category,
-                    }
-                    results.append(article)
+                # Prefer Naver News link for reliable scraping, fallback to originallink
+                link_naver = item.get("link")
+                link_orig = item.get("originallink")
+                link = link_naver if link_naver and "n.news.naver.com" in link_naver else link_orig or link_naver
+                
+                stance, press = classify_media(link)
+                article = {
+                    "title": clean_html(item.get("title")),
+                    "description": clean_html(item.get("description")),
+                    "link": link,
+                    "press": press,
+                    "stance": stance,
+                    "stance_label": stance_label(stance),
+                    "pubDate": pub_date_str,
+                    "category": category,
+                }
+                results.append(article)
         except requests.RequestException:
             pass
         return results
@@ -256,15 +280,28 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
 
     # 중복 링크 및 제목 제거
     seen_links = set()
-    seen_titles = set()
+    selected_tokens_list = []
     ordered = []
+    
     for art in all_results:
-        # Normalize title to catch semantic duplicates
-        norm_title = re.sub(r'[^가-힣a-zA-Z0-9]', '', art["title"])
-        if art["link"] not in seen_links and norm_title not in seen_titles:
+        if art["link"] in seen_links: continue
+        
+        # Tokenize title to catch semantic duplicates (words with 2+ characters)
+        tokens = set(re.findall(r'[가-힣a-zA-Z0-9]{2,}', art["title"]))
+        
+        is_dup = False
+        for ext_tokens in selected_tokens_list:
+            intersection = tokens.intersection(ext_tokens)
+            # If 3 or more meaningful words overlap, or similarity > 40%
+            if len(intersection) >= 3 or (len(tokens) > 0 and len(intersection) / len(tokens) > 0.4):
+                is_dup = True
+                break
+                
+        if not is_dup:
             seen_links.add(art["link"])
-            seen_titles.add(norm_title)
+            selected_tokens_list.append(tokens)
             ordered.append(art)
+            
         if len(ordered) >= count + 1:
             break
 
