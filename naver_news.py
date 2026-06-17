@@ -135,7 +135,7 @@ def fetch_og_image(url):
     try:
         resp = requests.get(url, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        }, timeout=2.5)
+        }, timeout=4.5)
         resp.encoding = resp.apparent_encoding or 'utf-8'
         html_content = resp.text
         
@@ -247,12 +247,16 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
         for future in concurrent.futures.as_completed(futures):
             all_results.extend(future.result())
 
-    # 중복 링크 제거
+    # 중복 링크 및 제목 제거
     seen_links = set()
+    seen_titles = set()
     ordered = []
     for art in all_results:
-        if art["link"] not in seen_links:
+        # Normalize title to catch semantic duplicates
+        norm_title = re.sub(r'[^가-힣a-zA-Z0-9]', '', art["title"])
+        if art["link"] not in seen_links and norm_title not in seen_titles:
             seen_links.add(art["link"])
+            seen_titles.add(norm_title)
             ordered.append(art)
         if len(ordered) >= count + 1:
             break

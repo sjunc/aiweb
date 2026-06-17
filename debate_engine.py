@@ -83,7 +83,13 @@ def analyze_commentary(api_keys: list[str] | str, article: dict, ml_result: dict
                     response_mime_type="application/json",
                 )
             )
-            return json.loads(response.text)
+            raw_text = response.text.strip()
+            if raw_text.startswith("```json"):
+                raw_text = raw_text[7:]
+            if raw_text.endswith("```"):
+                raw_text = raw_text[:-3]
+            raw_text = raw_text.strip()
+            return json.loads(raw_text)
         except Exception as e:
             print(f"[WARN] Gemini Key Index {idx} 분석 실패 (재시도 중): {e}")
             last_err = e
