@@ -128,6 +128,16 @@
             <li><strong>모델 경량화 및 고성능 직렬화:</strong> 전체 학습 파이프라인을 245KB 크기의 단일 가벼운 모델 파일(`bias_model.pkl`)로 경량화 직렬화하여, AWS EC2와 같은 제한된 클라우드 환경에서도 추론 호출 시 1ms 미만의 극도로 민첩한 실시간 예측(Inference)을 가능하게 했습니다.</li>
           </ul>
         </div>
+
+        <div class="tech-card" style="border: 1px solid var(--accent); background: rgba(0, 240, 255, 0.03);">
+          <h3 class="tech-sub-title" style="color: var(--accent);">4. 단순 팩트체크 ➡️ GraphRAG 기반 '이슈 오염도 및 프레임 추적'</h3>
+          <ul class="tech-list">
+            <li><strong>단편적 분석의 한계 극복:</strong> 네이버 뉴스 API로 가져온 단편적인 기사 하나만 분석하는 것은 깊이가 얕습니다. 하나의 거대한 정치적 사건(예: 특정 법안 발의, 스캔들)이 시간 흐름에 따라 어떻게 언론사별로 프레임이 바뀌는지 <strong>지식 그래프(Knowledge Graph)</strong> 형태로 추적합니다.</li>
+            <li><strong>Entity-Relation 추출 및 적재:</strong> 수많은 기사 텍스트에서 주체(Entity) - 행동(Relation) - 대상(Entity)의 맥락을 LLM으로 정밀 추출하여 <strong>Neo4j와 같은 Graph DB</strong>에 구조화된 데이터로 적재합니다.</li>
+            <li><strong>프레임 왜곡 경로 역추적:</strong> A 언론사가 최초로 퍼트린 특정 의혹(노드)이 어떤 경로를 타고 다른 보수/진보 매체로 확산(엣지)되며 본래의 맥락이 어떻게 왜곡 및 오염되었는지 <strong>GraphRAG 아키텍처</strong>를 통해 심층 탐색하고, 이를 챗봇이 시각적으로 풀어서 설명해 줍니다.</li>
+            <li><strong>최첨단 기술 구현:</strong> 2026년 현재 AI 업계에서 가장 핫한 대세 기술인 <strong>GraphRAG (Graph Retrieval-Augmented Generation)</strong> 및 벡터 DB 하이브리드 검색 아키텍처 구현 경험을 시스템에 탑재하여, 기존 단순 RAG의 정보 한계를 뛰어넘는 거시적인 언론 생태계 추적 능력을 확보했습니다.</li>
+          </ul>
+        </div>
       </div>
     </section>
 
