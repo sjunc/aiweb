@@ -67,48 +67,61 @@ def stance_label(stance):
     return STANCE_LABELS.get(stance, '판별불가')
 
 
+_body_cache = {}
+_body_cache_lock = threading.Lock()
+
+def _extract_body_bs4(html_content: str, max_len: int = 5000) -> str | None:
+    try:
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html_content, 'html.parser')
+        
+        # Remove script and style elements
+        for script in soup(["script", "style"]):
+            script.decompose()
+
+        # Common article body selectors
+        selectors = [
+            "#dic_area", "#articleBodyContents", ".article_view", "article",
+            "#articleBody", "#newsEndContents", ".article-body", ".article_txt",
+            "._article_content", "#articleContent", ".content", "[itemprop='articleBody']"
+        ]
+        
+        for sel in selectors:
+            elem = soup.select_one(sel)
+            if elem:
+                text = elem.get_text(separator=' ', strip=True)
+                if len(text) > 100:
+                    return text[:max_len]
+    except ImportError:
+        # Fallback if bs4 is missing
+        pass
+    return None
+
 def fetch_article_body(url: str, max_len: int = 5000) -> str | None:
-    """
-    originallink에서 실제 기사 본문 HTML을 긁어와 텍스트만 추출
-    
-    여러 한국 뉴스 사이트의 공통 패턴을 시도하고,
-    실패하면 None 반환 (프론트에서 description fallback).
-    """
     if not url:
         return None
+        
+    with _body_cache_lock:
+        if url in _body_cache:
+            return _body_cache[url]
+
     try:
         resp = requests.get(url, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }, timeout=4)
-        resp.encoding = 'utf-8'
-        raw = resp.text
+        resp.encoding = resp.apparent_encoding or 'utf-8'
+        body_text = _extract_body_bs4(resp.text, max_len)
+        if body_text:
+            with _body_cache_lock:
+                _body_cache[url] = body_text
+                # Prevent memory leak by keeping cache size bounded
+                if len(_body_cache) > 1000:
+                    keys_to_delete = list(_body_cache.keys())[:500]
+                    for k in keys_to_delete:
+                        del _body_cache[k]
+            return body_text
     except requests.RequestException:
-        return None
-
-    # 공통 article 영역 패턴
-    patterns = [
-        r'<div[^>]*id=["\']?dic_area["\']?[^>]*>(.*?)</div>',
-        r'<div[^>]*id=["\']?articleBodyContents["\']?[^>]*>(.*?)</div>',
-        r'<div[^>]*class=["\'][^"\']*article_view[^"\']*["\'][^>]*>(.*?)</div>',
-        r'<article[^>]*>(.*?)</article>',
-        r'<div[^>]*id=["\']?articleBody["\']?[^>]*>(.*?)</div>',
-        r'<div[^>]*id=["\']?newsEndContents["\']?[^>]*>(.*?)</div>',
-        r'<div[^>]*class=["\'][^"\']*article-body[^"\']*["\'][^>]*>(.*?)</div>',
-        r'<div[^>]*class=["\'][^"\']*article_txt[^"\']*["\'][^>]*>(.*?)</div>',
-        r'<div[^>]*class=["\'][^"\']*_article_content[^"\']*["\'][^>]*>(.*?)</div>',
-        r'<div[^>]*id=["\']?articleContent["\']?[^>]*>(.*?)</div>',
-        r'<div[^>]*class=["\'][^"\']*content[^"\']*["\'][^>]*>(.*?)</div>',
-        r'<div[^>]*itemprop=["\']articleBody["\'][^>]*>(.*?)</div>',
-    ]
-    for pat in patterns:
-        m = re.search(pat, raw, re.DOTALL)
-        if m:
-            text = re.sub(r'<script[^>]*>.*?</script>', '', m.group(1), flags=re.DOTALL)
-            text = re.sub(r'<[^>]+>', '', text)
-            text = html.unescape(text)
-            text = re.sub(r'\s+', ' ', text).strip()
-            if len(text) > 100:
-                return text[:max_len]
+        pass
     return None
 
 
@@ -117,12 +130,22 @@ def fetch_og_image(url):
         return None
     try:
         resp = requests.get(url, headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/120.0.0.0"
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }, timeout=2.5)
         resp.encoding = resp.apparent_encoding or 'utf-8'
         html_content = resp.text
         
-        # Try finding og:image tag with property and content in any order
+        # Cache the body text while we have the HTML!
+        body_text = _extract_body_bs4(html_content)
+        if body_text:
+            with _body_cache_lock:
+                _body_cache[url] = body_text
+                if len(_body_cache) > 1000:
+                    keys_to_delete = list(_body_cache.keys())[:500]
+                    for k in keys_to_delete:
+                        del _body_cache[k]
+        
+        # Try finding og:image tag
         m1 = re.search(r'<meta[^>]*property=["\']og:image["\'][^>]*content=["\']([^"\']+)["\']', html_content, re.IGNORECASE)
         if m1:
             return m1.group(1).strip()

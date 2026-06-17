@@ -1,9 +1,9 @@
-google-genai>=1.0.0
-requests>=2.31.0
-python-dotenv>=1.0.0
-fastapi>=0.100.0
-uvicorn>=0.20.0
-scikit-learn>=1.3.0
-numpy>=1.24.0
-# konlpy>=0.6.0  # 한글 형태소 분석 (Windows: pip install konlpy)
-# beautifulsoup4>=4.12.0  # 기사 본문 추출 고도화 시
+google-genai==2.8.0
+requests==2.34.2
+python-dotenv==1.2.2
+fastapi==0.137.1
+uvicorn==0.49.0
+scikit-learn==1.9.0
+numpy==2.4.6
+pydantic==2.13.4
+beautifulsoup4==4.13.0

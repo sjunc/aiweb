@@ -102,7 +102,7 @@ class TextPreprocessor:
         cleaned = TextPreprocessor.clean(text)
         if HAS_KONLPY:
             try:
-                return _okt.nouns(cleaned) + _okt.morphs(cleaned)
+                return _okt.morphs(cleaned)
             except Exception:
                 pass
         return cleaned.split()  # fallback
@@ -292,20 +292,27 @@ class BiasClassifier:
             manual_features,
         ])
 
+        # 평가 (Train/Test Split으로 현실적 정확도 산출)
+        from sklearn.model_selection import train_test_split
+        X_train, X_test, y_train, y_test = train_test_split(X, labels, test_size=0.2, random_state=42)
+        
         # 분류기 학습
         self.pipeline = LogisticRegression(
             solver="lbfgs",
             max_iter=1000, C=1.0, random_state=42,
         )
-        self.pipeline.fit(X, labels)
+        self.pipeline.fit(X_train, y_train)
 
         # 평가
-        preds = self.pipeline.predict(X)
-        acc = (preds == np.array(labels)).mean()
-        report = classification_report(labels, preds,
+        preds = self.pipeline.predict(X_test)
+        acc = (preds == np.array(y_test)).mean()
+        report = classification_report(y_test, preds,
                                        labels=list(self.STANCE_MAP.values()),
                                        target_names=list(self.STANCE_MAP.keys()),
                                        output_dict=True)
+
+        # 전체 데이터로 최종 학습
+        self.pipeline.fit(X, labels)
 
         result = {
             "accuracy": acc,
