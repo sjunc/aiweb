@@ -307,7 +307,7 @@ async function openArticle(art) {
         modalImg = document.createElement("img");
         modalImg.id = "modal-image";
         modalImg.className = "modal-article-img";
-        modalTitle.parentNode.insertBefore(modalImg, modalBody);
+        modalBody.parentNode.insertBefore(modalImg, modalBody);
     }
     if (art.image_url) {
         modalImg.src = art.image_url;
