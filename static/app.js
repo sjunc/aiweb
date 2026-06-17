@@ -68,7 +68,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    loadPage(0);
+    // 모든 탭을 동시에 프리로드 (속도 향상)
+    for (let i = 0; i < PAGE_COUNT; i++) loadPage(i);
     setTimeout(() => track.classList.add("track-ready"), 50);
     initDrag();
 

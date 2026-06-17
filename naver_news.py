@@ -77,7 +77,7 @@ def fetch_article_body(url: str, max_len: int = 5000) -> str | None:
     try:
         resp = requests.get(url, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        }, timeout=8)
+        }, timeout=4)
         resp.encoding = 'utf-8'
         raw = resp.text
     except requests.RequestException:
@@ -142,67 +142,83 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
     if not client_id or not client_secret:
         raise ValueError("네이버 API 인증 정보가 필요합니다.")
 
+    import concurrent.futures
+    import time
+
+    cats = categories if categories else NEWS_CATEGORIES
+    cache_key = ",".join(sorted(cats))
+
+    # 60초 TTL 캐시 — 같은 카테고리 조합의 반복 요청을 즉시 반환
+    if cache_key in _trending_cache:
+        cached_time, cached_data = _trending_cache[cache_key]
+        if time.time() - cached_time < 60:
+            return cached_data
+
     headers = {
         "X-Naver-Client-Id": client_id,
         "X-Naver-Client-Secret": client_secret
     }
 
-    cats = categories if categories else NEWS_CATEGORIES
-
-    seen_links = set()
-    ordered = []
-
     # 카테고리가 1개이면 다 가져오고, 여러 개이면 카테고리당 개수를 제한해 골고루 섞음
     per_cat_limit = 20 if len(cats) == 1 else 3
 
-    # 최대 3바퀴 순회
-    for _round in range(3):
+    def fetch_category(category):
+        """단일 카테고리에 대한 네이버 API 호출 (병렬 실행용)"""
+        results = []
+        try:
+            resp = requests.get(
+                "https://openapi.naver.com/v1/search/news.json",
+                headers=headers,
+                params={"query": category, "display": 15, "sort": "sim"},
+                timeout=5
+            )
+            if resp.status_code != 200:
+                return results
+
+            for item in resp.json().get("items", []):
+                if len(results) >= per_cat_limit:
+                    break
+                link = item.get("originallink") or item.get("link")
+                if link:
+                    stance, press = classify_media(link)
+                    article = {
+                        "title": clean_html(item.get("title")),
+                        "description": clean_html(item.get("description")),
+                        "link": link,
+                        "press": press,
+                        "stance": stance,
+                        "stance_label": stance_label(stance),
+                        "pubDate": item.get("pubDate", ""),
+                        "category": category,
+                    }
+                    results.append(article)
+        except requests.RequestException:
+            pass
+        return results
+
+    # 모든 카테고리를 동시에 호출 (핵심 속도 향상)
+    all_results = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(cats), 10)) as executor:
+        futures = {executor.submit(fetch_category, cat): cat for cat in cats}
+        for future in concurrent.futures.as_completed(futures):
+            all_results.extend(future.result())
+
+    # 중복 링크 제거
+    seen_links = set()
+    ordered = []
+    for art in all_results:
+        if art["link"] not in seen_links:
+            seen_links.add(art["link"])
+            ordered.append(art)
         if len(ordered) >= count + 1:
             break
-        for category in cats:
-            if len(ordered) >= count + 1:
-                break
-            try:
-                resp = requests.get(
-                    "https://openapi.naver.com/v1/search/news.json",
-                    headers=headers,
-                    params={"query": category, "display": 15, "sort": "sim"},
-                    timeout=8
-                )
-                if resp.status_code != 200:
-                    continue
-                
-                added_for_this_cat = 0
-                for item in resp.json().get("items", []):
-                    if added_for_this_cat >= per_cat_limit:
-                        break
-                    link = item.get("originallink") or item.get("link")
-                    if link and link not in seen_links:
-                        seen_links.add(link)
-                        stance, press = classify_media(link)
-                        article = {
-                            "title": clean_html(item.get("title")),
-                            "description": clean_html(item.get("description")),
-                            "link": link,
-                            "press": press,
-                            "stance": stance,
-                            "stance_label": stance_label(stance),
-                            "pubDate": item.get("pubDate", ""),
-                            "category": category,
-                        }
-                        ordered.append(article)
-                        added_for_this_cat += 1
-            except requests.RequestException:
-                continue
 
     # Slice items
     main = ordered[0] if ordered else None
     subs = ordered[1:1 + count] if len(ordered) > 1 else []
 
     # Fetch og:image in parallel using ThreadPoolExecutor
-    import concurrent.futures
-    all_selected = [main] + subs
-    all_selected = [a for a in all_selected if a]
+    all_selected = [a for a in ([main] + subs) if a]
 
     if all_selected:
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
@@ -215,4 +231,11 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
                 except Exception:
                     art["image_url"] = None
 
-    return {"main": main, "subs": subs}
+    result = {"main": main, "subs": subs}
+    _trending_cache[cache_key] = (time.time(), result)
+    return result
+
+
+# 서버 시간 기반 캐시 저장소
+_trending_cache: dict = {}
+
