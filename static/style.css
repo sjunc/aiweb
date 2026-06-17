@@ -69,6 +69,7 @@ body {
     overflow: hidden;
     user-select: none;
     -webkit-user-select: none;
+    perspective: 1200px;
 }
 .carousel-track {
     display: flex;

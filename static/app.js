@@ -99,6 +99,7 @@ function goToPage(idx) {
 function initDrag() {
     let startX = 0, startY = 0, deltaX = 0, dragging = false;
     function onStart(x, y) {
+        if (modal.classList.contains("active")) return;
         startX = x; startY = y; deltaX = 0; dragging = true;
         track.style.transition = "none";
     }
@@ -112,7 +113,10 @@ function initDrag() {
         const base = -currentPage * 100;
         const pct = (dx / track.parentElement.offsetWidth) * 100;
         const clamp = (v) => Math.max(-(PAGE_COUNT-1)*100, Math.min(0, v));
-        track.style.transform = `translateX(${clamp(base + pct)}%)`;
+        
+        // 약간의 3D 회전을 추가해 신문이 넘어가는 듯한 장력을 표현 (Newspaper drag effect)
+        const rotation = (dx / track.parentElement.offsetWidth) * 10; 
+        track.style.transform = `translateX(${clamp(base + pct)}%) rotateY(${rotation}deg)`;
     }
     function onEnd() {
         if (!dragging) return;
@@ -123,10 +127,12 @@ function initDrag() {
         else if (deltaX > threshold && currentPage > 0) goToPage(currentPage - 1);
         else goToPage(currentPage);
     }
-    track.addEventListener("touchstart", (e) => onStart(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-    track.addEventListener("touchmove", (e) => onMove(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
-    track.addEventListener("touchend", onEnd, { passive: true });
-    track.addEventListener("mousedown", (e) => onStart(e.clientX, e.clientY));
+    
+    // 전역 스와이프: 화면 어디를 터치해도 탭 전환
+    document.addEventListener("touchstart", (e) => onStart(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+    document.addEventListener("touchmove", (e) => onMove(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+    document.addEventListener("touchend", onEnd, { passive: true });
+    document.addEventListener("mousedown", (e) => onStart(e.clientX, e.clientY));
     document.addEventListener("mousemove", (e) => { if (dragging) onMove(e.clientX, e.clientY); });
     document.addEventListener("mouseup", onEnd);
 }
