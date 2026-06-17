@@ -196,15 +196,32 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
             resp = requests.get(
                 "https://openapi.naver.com/v1/search/news.json",
                 headers=headers,
-                params={"query": category, "display": 15, "sort": "date"},
+                params={"query": category, "display": 50, "sort": "sim"},
                 timeout=5
             )
             if resp.status_code != 200:
                 return results
 
+            from email.utils import parsedate_to_datetime
+            from datetime import datetime, timezone, timedelta
+            
+            now = datetime.now(timezone.utc)
+            cutoff = now - timedelta(hours=24)
+
             for item in resp.json().get("items", []):
                 if len(results) >= per_cat_limit:
                     break
+                
+                # 24시간 이내 주요 뉴스 필터링
+                pub_date_str = item.get("pubDate", "")
+                if pub_date_str:
+                    try:
+                        dt = parsedate_to_datetime(pub_date_str)
+                        if dt < cutoff:
+                            continue
+                    except Exception:
+                        pass
+                
                 link = item.get("originallink") or item.get("link")
                 if link:
                     stance, press = classify_media(link)
@@ -215,7 +232,7 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
                         "press": press,
                         "stance": stance,
                         "stance_label": stance_label(stance),
-                        "pubDate": item.get("pubDate", ""),
+                        "pubDate": pub_date_str,
                         "category": category,
                     }
                     results.append(article)
