@@ -91,6 +91,18 @@ async def read_index():
     return FileResponse(path)
 
 
+@app.post("/api/body")
+async def get_article_body(req: AnalyzeRequest):
+    """기사 본문만 빠르게 크롤링하여 반환 (Gemini 로딩 전 표시용)"""
+    art = req.article
+    if not art:
+        raise HTTPException(400, "기사 정보가 필요합니다.")
+    url = art.get("link", "") or art.get("originallink", "")
+    description = art.get("description", "")
+    body = naver_news.fetch_article_body(url) or description
+    return {"body": body}
+
+
 @app.get("/health")
 async def health():
     return {

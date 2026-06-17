@@ -201,7 +201,7 @@ function stanceColor(stance) {
     return (STANCE_COLORS[stance] || STANCE_COLORS.unknown).thumb;
 }
 function placeholderHTML(press, stance, size) {
-    const s = press ? press.charAt(0) : "?";
+    const s = "N";
     const color = stanceColor(stance);
     return `<span class="thumb-placeholder" style="width:${size}px;height:${size}px;background:${color}20;color:${color};border:1px solid ${color}40;font-size:${Math.round(size*0.38)}px;">${s}</span>`;
 }
@@ -228,7 +228,6 @@ function renderMainCard(art, el) {
         <div class="main-thumb-wrap">
             ${imgHTML}
             <div class="main-thumb-text">
-                <div class="main-press-line"><span class="main-press">${art.press || "기타"}</span></div>
                 <div class="card-title">${art.title}</div>
             </div>
         </div>
@@ -268,7 +267,6 @@ function createMiniCard(art) {
         ${imgHTML}
         <div class="mini-text">
             <div class="mini-title">${art.title}</div>
-            <div class="mini-press">${art.press || "기타"}</div>
             ${barHTML ? `<div class="mini-bar-wrap">${barHTML}</div>` : ""}
         </div>
     `;
@@ -277,11 +275,22 @@ function createMiniCard(art) {
 }
 
 /* ── Modal ── */
+async function fetchBodyFast(art) {
+    try {
+        const result = await apiPost("/api/body", { article: art });
+        if (currentArticle && currentArticle.link === art.link && result.body) {
+            modalBody.textContent = result.body;
+        }
+    } catch (err) {
+        console.error("Fast body fetch failed:", err);
+    }
+}
+
 async function openArticle(art) {
     currentArticle = art;
     currentAnalysis = null;
 
-    modalPress.textContent = art.press || "기타";
+    modalPress.textContent = "기사";
     modalPress.style.cssText = `border-left:3px solid ${stanceColor(art.stance)}; padding-left:0.5rem;`;
     modalDate.textContent = art.pubDate || "";
     modalTitle.textContent = art.title;
@@ -317,6 +326,7 @@ async function openArticle(art) {
     modal.classList.add("active");
     document.body.style.overflow = "hidden";
 
+    fetchBodyFast(art);
     loadGeminiAnalysis();
 }
 
@@ -372,6 +382,7 @@ function showGemini(result) {
 function closeModal() {
     modal.classList.remove("active");
     document.body.style.overflow = "";
+    currentArticle = null;
 }
 
 function retryAnalysis() {
