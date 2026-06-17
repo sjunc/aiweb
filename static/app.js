@@ -410,3 +410,28 @@ function escapeHtml(str) {
     d.textContent = str;
     return d.innerHTML;
 }
+
+// GraphRAG Event Listener
+document.addEventListener("DOMContentLoaded", () => {
+    const btnExtract = document.getElementById("btn-extract-graph");
+    const graphResult = document.getElementById("graph-rag-result");
+    if (btnExtract) {
+        btnExtract.onclick = async () => {
+            if (!currentArticle) return;
+            btnExtract.disabled = true;
+            btnExtract.textContent = "지식 그래프 추출 중... (수십 초 소요될 수 있음)";
+            graphResult.classList.add("hidden");
+            try {
+                const result = await apiPost("/api/graph/extract", { article: currentArticle });
+                graphResult.textContent = result.subgraph || "추출된 그래프가 없습니다.";
+                graphResult.classList.remove("hidden");
+            } catch (err) {
+                graphResult.textContent = "오류: " + err.message;
+                graphResult.classList.remove("hidden");
+            } finally {
+                btnExtract.disabled = false;
+                btnExtract.textContent = "지식 그래프 수동 추출 및 분석 (API 절약)";
+            }
+        };
+    }
+});

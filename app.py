@@ -157,10 +157,6 @@ def analyze_article(req: AnalyzeRequest, background_tasks: BackgroundTasks):
 
     gemini_result = None
     if GEMINI_KEYS:
-        # 백그라운드에서 GraphRAG 데이터 적재
-        press = art.get("press", "")
-        background_tasks.add_task(_ingest_graph, GEMINI_KEYS, body, press)
-
         try:
             enrich = {**art, "body": body}
             gemini_result = debate_engine.analyze_commentary(GEMINI_KEYS, enrich, art.get("ml_analysis"))
@@ -178,6 +174,33 @@ def analyze_article(req: AnalyzeRequest, background_tasks: BackgroundTasks):
         "gemini_analysis": gemini_result or {
             "bias_alert": "", "balanced_view": "", "fact_check": "", "comparison": "",
         },
+    }
+
+@app.post("/api/graph/extract")
+def extract_graph(req: AnalyzeRequest):
+    art = req.article
+    if not art:
+        raise HTTPException(400, "기사 정보가 필요합니다.")
+        
+    url = art.get("link", "") or art.get("originallink", "")
+    body = naver_news.fetch_article_body(url) or art.get("description", "")
+    press = art.get("press", "")
+    
+    if not GEMINI_KEYS:
+        raise HTTPException(400, "Gemini API 키가 설정되지 않았습니다.")
+        
+    # Extract
+    kg_data = graph_engine.extract_knowledge_graph(GEMINI_KEYS, body, press)
+    if kg_data:
+        graph_engine.ingest_to_neo4j(kg_data)
+        
+    # Search
+    import re
+    keywords = [w for w in re.findall(r'\b\w+\b', art.get("title", "")) if len(w) >= 2]
+    subgraph = graph_engine.search_subgraph(keywords)
+    
+    return {
+        "subgraph": subgraph or "현재 해당 이슈에 대해 적재된 지식 그래프 관계가 충분하지 않습니다."
     }
 
 
