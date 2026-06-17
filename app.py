@@ -194,14 +194,33 @@ def extract_graph(req: AnalyzeRequest):
     if kg_data:
         graph_engine.ingest_to_neo4j(kg_data)
         
-    # Search
+    # Search Neo4j for connected subgraph
     import re
     keywords = [w for w in re.findall(r'\b\w+\b', art.get("title", "")) if len(w) >= 2]
     subgraph_data = graph_engine.search_subgraph(keywords)
     
+    vis_data = subgraph_data.get("vis", {"nodes": [], "edges": []})
+    text_data = subgraph_data.get("text", "")
+    
+    # Fallback: if search_subgraph returned nothing (no keyword overlap), just visualize what we just extracted!
+    if not vis_data["nodes"] and kg_data:
+        nodes_dict = {}
+        edges = []
+        for row in kg_data:
+            src, rel, tgt, prs = row["source"], row["relation"], row["target"], row["press"]
+            if src not in nodes_dict: nodes_dict[src] = {"id": src, "label": src, "group": "entity"}
+            if tgt not in nodes_dict: nodes_dict[tgt] = {"id": tgt, "label": tgt, "group": "entity"}
+            if prs not in nodes_dict: nodes_dict[prs] = {"id": prs, "label": prs, "group": "press", "shape": "box", "color": "#ff9a9e"}
+            
+            edges.append({"from": prs, "to": src, "label": "보도", "arrows": "to", "dashes": True})
+            edges.append({"from": src, "to": tgt, "label": rel, "arrows": "to"})
+            
+        vis_data = {"nodes": list(nodes_dict.values()), "edges": edges}
+        text_data = "현재 이 기사에서 단독으로 추출된 프레임입니다. (타 매체 연관 데이터 부족)"
+
     return {
-        "subgraph_text": subgraph_data.get("text", "") or "현재 해당 이슈에 대해 적재된 지식 그래프 관계가 충분하지 않습니다.",
-        "subgraph_vis": subgraph_data.get("vis", {"nodes": [], "edges": []})
+        "subgraph_text": text_data or "현재 해당 이슈에 대해 추출된 지식 그래프가 없습니다.",
+        "subgraph_vis": vis_data
     }
 
 

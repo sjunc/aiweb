@@ -114,9 +114,7 @@ function initDrag() {
         const pct = (dx / track.parentElement.offsetWidth) * 100;
         const clamp = (v) => Math.max(-(PAGE_COUNT-1)*100, Math.min(0, v));
         
-        // 약간의 3D 회전을 추가해 신문이 넘어가는 듯한 장력을 표현 (Newspaper drag effect)
-        const rotation = (dx / track.parentElement.offsetWidth) * 10; 
-        track.style.transform = `translateX(${clamp(base + pct)}%) rotateY(${rotation}deg)`;
+        track.style.transform = `translateX(${clamp(base + pct)}%)`;
     }
     function onEnd() {
         if (!dragging) return;
