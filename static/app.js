@@ -331,11 +331,13 @@ async function openArticle(art) {
     document.body.style.overflow = "hidden";
 
     fetchBodyFast(art);
-    loadGeminiAnalysis();
+    loadGeminiAnalysis(art);
 }
 
-async function loadGeminiAnalysis() {
+async function loadGeminiAnalysis(artRef) {
     if (!currentArticle) return;
+    artRef = artRef || currentArticle;
+    
     analysisLoading.classList.remove("hidden");
     analysisContent.classList.add("hidden");
     
@@ -343,12 +345,16 @@ async function loadGeminiAnalysis() {
     const customKey = apiKeyInput ? apiKeyInput.value.trim() : "";
 
     try {
-        const result = await apiPost("/api/analyze", { article: currentArticle, api_key: customKey });
+        const result = await apiPost("/api/analyze", { article: artRef, api_key: customKey });
+        // Prevent state contamination from previous clicks
+        if (!currentArticle || currentArticle.link !== artRef.link) return;
+        
         currentAnalysis = result;
         showGemini(result);
     } catch (err) {
-        analysisLoading.classList.remove("hidden");
-        analysisContent.classList.add("hidden");
+        if (!currentArticle || currentArticle.link !== artRef.link) return;
+        analysisLoading.classList.add("hidden");
+        analysisContent.classList.remove("hidden");
         modalAlert.textContent = err.message;
     }
 }
@@ -393,12 +399,14 @@ function closeModal() {
 }
 
 function retryAnalysis() {
-    if (currentArticle) loadGeminiAnalysis();
+    if (currentArticle) loadGeminiAnalysis(currentArticle);
 }
 
 async function sendChatMessage() {
     const msg = modalChatInput.value.trim();
     if (!msg || !currentArticle) return;
+    const artRef = currentArticle;
+    
     modalChatMsgs.insertAdjacentHTML('beforeend', `<div class="chat-bubble user">${escapeHtml(msg)}</div>`);
     modalChatInput.value = "";
     modalChatMsgs.scrollTop = modalChatMsgs.scrollHeight;
@@ -408,12 +416,20 @@ async function sendChatMessage() {
     const customKey = apiKeyInput ? apiKeyInput.value.trim() : "";
 
     try {
-        const data = await apiPost("/api/perspective", { article: currentArticle, user_message: msg, api_key: customKey });
+        const data = await apiPost("/api/perspective", { article: artRef, user_message: msg, api_key: customKey });
+        if (!currentArticle || currentArticle.link !== artRef.link) return;
+        
         modalChatMsgs.insertAdjacentHTML('beforeend', `<div class="chat-bubble assistant">${escapeHtml(data.reply)}</div>`);
         modalChatMsgs.scrollTop = modalChatMsgs.scrollHeight;
     } catch (err) {
+        if (!currentArticle || currentArticle.link !== artRef.link) return;
         modalChatMsgs.insertAdjacentHTML('beforeend', `<div class="chat-bubble error">오류: ${escapeHtml(err.message)}</div>`);
-    } finally { modalChatSend.disabled = false; modalChatInput.focus(); }
+    } finally { 
+        if (currentArticle && currentArticle.link === artRef.link) {
+            modalChatSend.disabled = false; 
+            modalChatInput.focus(); 
+        }
+    }
 }
 
 function escapeHtml(str) {
@@ -431,6 +447,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (btnExtract) {
         btnExtract.onclick = async () => {
             if (!currentArticle) return;
+            const artRef = currentArticle;
             btnExtract.disabled = true;
             btnExtract.textContent = "지식 그래프 시각화 중... (수십 초 소요될 수 있음)";
             graphResult.classList.add("hidden");
@@ -440,7 +457,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const apiKeyInput = document.getElementById("custom-api-key");
                 const customKey = apiKeyInput ? apiKeyInput.value.trim() : "";
                 
-                const result = await apiPost("/api/graph/extract", { article: currentArticle, api_key: customKey });
+                const result = await apiPost("/api/graph/extract", { article: artRef, api_key: customKey });
+                if (!currentArticle || currentArticle.link !== artRef.link) return;
                 
                 // 1. Text result
                 graphResult.textContent = result.subgraph_text || "추출된 그래프가 없습니다.";

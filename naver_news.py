@@ -113,8 +113,8 @@ def fetch_article_body(url: str, max_len: int = 5000) -> str | None:
         resp = requests.get(url, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }, timeout=4)
-        resp.encoding = resp.apparent_encoding or 'utf-8'
-        body_text = _extract_body_bs4(resp.text, max_len)
+        html_content = resp.content.decode(resp.encoding or 'utf-8', errors='ignore')
+        body_text = _extract_body_bs4(html_content, max_len)
         if body_text:
             with _body_cache_lock:
                 _body_cache[url] = body_text
@@ -136,8 +136,8 @@ def fetch_og_image(url):
         resp = requests.get(url, headers={
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         }, timeout=4.5)
-        resp.encoding = resp.apparent_encoding or 'utf-8'
-        html_content = resp.text
+        # apparent_encoding is extremely slow (uses chardet), just use headers encoding or utf-8
+        html_content = resp.content.decode(resp.encoding or 'utf-8', errors='ignore')
         
         # Cache the body text while we have the HTML!
         body_text = _extract_body_bs4(html_content)
