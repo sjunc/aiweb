@@ -30,12 +30,12 @@ GRAPH_EXTRACTION_PROMPT = """
 
 다음 JSON 배열 포맷으로 추출하십시오. 반드시 JSON 배열만 응답하십시오.
 [
-  {
+  {{
     "source": "노드1 (Entity)",
     "relation": "관계 (동사/명사)",
     "target": "노드2 (Entity)",
     "press": "보도 언론사명"
-  }
+  }}
 ]
 """
 
