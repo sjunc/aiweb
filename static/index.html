@@ -144,19 +144,20 @@
                                 </div>
                             </div>
                             <div class="gemini-block" id="graph-rag-block">
-                                <div class="gemini-label"><i class="fa-solid fa-diagram-project"></i> GraphRAG 프레임 추적</div>
+                                <div class="gemini-label"><i class="fa-solid fa-diagram-project"></i> GraphRAG 프레임 확산 그래프 시각화</div>
                                 <div style="margin-top:0.5rem;">
-                                    <button id="btn-extract-graph" class="btn btn-sm">지식 그래프 수동 추출 및 분석 (API 절약)</button>
+                                    <button id="btn-extract-graph" class="btn btn-sm">프레임 확산 그래프 시각화</button>
                                 </div>
                                 <div id="graph-rag-result" class="gemini-text hidden" style="margin-top:0.5rem; white-space: pre-wrap; font-size: 0.85rem; background: rgba(0,0,0,0.2); padding: 0.5rem; border-radius: 4px;"></div>
+                                <div id="graph-visualization" class="hidden" style="width: 100%; height: 350px; margin-top: 1rem; border: 1px solid var(--border); border-radius: 8px; background: #fff;"></div>
                             </div>
                         </div>
                         <div class="modal-chat">
                             <h4 style="font-family:var(--font-head);font-size:0.9rem;margin-bottom:0.5rem;">에이전트와 대화</h4>
                             <div class="modal-chat-msgs" id="modal-chat-msgs"></div>
                             <div class="modal-chat-input">
-                                <input type="text" id="modal-chat-input" placeholder="질문 입력...">
-                                <button class="btn btn-sm" id="modal-chat-send"><i class="fa-solid fa-paper-plane"></i></button>
+                                <input type="text" id="modal-chat-input" placeholder="이 기사의 숨겨진 프레임이 뭐야?" autocomplete="off" />
+                                <button id="modal-chat-send" class="btn btn-sm"><i class="fa-solid fa-paper-plane"></i></button>
                             </div>
                         </div>
                         <button class="btn btn-sm" id="modal-retry" style="margin-top:0.8rem;"><i class="fa-solid fa-rotate"></i> 재시도</button>
@@ -166,6 +167,7 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <script src="/static/app.js?v=4.0.2"></script>
 </body>
 </html>

@@ -108,7 +108,8 @@ def respond_as_panel(api_keys: list[str] | str, article: dict, user_message: str
     # GraphRAG 키워드 추출 및 검색
     text_to_search = article.get("title", "") + " " + user_message
     keywords = [w for w in re.findall(r'\b\w+\b', text_to_search) if len(w) >= 2]
-    subgraph_context = graph_engine.search_subgraph(keywords)
+    subgraph_data = graph_engine.search_subgraph(keywords)
+    subgraph_context = subgraph_data.get("text", "")
 
     last_err = None
     for idx, key in enumerate(keys):

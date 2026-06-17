@@ -93,26 +93,54 @@ def ingest_to_neo4j(kg_data: list[dict]):
     except Exception as e:
         print(f"[WARN] Neo4j 적재 실패: {e}")
 
-def search_subgraph(query_entities: list[str]) -> str:
-    """엔티티 목록을 기반으로 Neo4j에서 서브그래프를 검색합니다."""
+def search_subgraph(query_entities: list[str]) -> dict:
+    """엔티티 목록을 기반으로 Neo4j에서 서브그래프를 검색하고 텍스트 및 시각화 데이터를 반환합니다."""
     if not driver or not query_entities:
-        return ""
+        return {"text": "", "vis": {"nodes": [], "edges": []}}
 
     query = """
     MATCH (s:Entity)-[r:RELATION]->(t:Entity)
     WHERE s.name IN $entities OR t.name IN $entities
     RETURN s.name AS source, r.type AS relation, t.name AS target, r.press AS presses
-    LIMIT 20
+    LIMIT 30
     """
     try:
         with driver.session() as session:
             result = session.run(query, entities=query_entities)
             lines = []
+            nodes = {}
+            edges = []
+            
             for record in result:
-                lines.append(f"({record['source']}) -[{record['relation']} (보도: {', '.join(record['presses'] or [])})]-> ({record['target']})")
-            if lines:
-                return "\n".join(lines)
-            return ""
+                src = record['source']
+                rel = record['relation']
+                tgt = record['target']
+                presses = record['presses'] or []
+                
+                # Text formulation
+                lines.append(f"({src}) -[{rel} (보도: {', '.join(presses)})]-> ({tgt})")
+                
+                # Vis.js formatting
+                if src not in nodes:
+                    nodes[src] = {"id": src, "label": src, "group": "entity"}
+                if tgt not in nodes:
+                    nodes[tgt] = {"id": tgt, "label": tgt, "group": "entity"}
+                
+                # Create edges for each press to show propagation
+                for press in presses:
+                    if press not in nodes:
+                        nodes[press] = {"id": press, "label": press, "group": "press", "shape": "box", "color": "#ff9a9e"}
+                    edges.append({"from": press, "to": src, "label": "보도", "arrows": "to", "dashes": True})
+                
+                edges.append({"from": src, "to": tgt, "label": rel, "arrows": "to"})
+
+            return {
+                "text": "\n".join(lines) if lines else "",
+                "vis": {
+                    "nodes": list(nodes.values()),
+                    "edges": edges
+                }
+            }
     except Exception as e:
         print(f"[WARN] Neo4j 검색 실패: {e}")
-        return ""
+        return {"text": "", "vis": {"nodes": [], "edges": []}}

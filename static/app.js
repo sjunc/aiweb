@@ -415,22 +415,68 @@ function escapeHtml(str) {
 document.addEventListener("DOMContentLoaded", () => {
     const btnExtract = document.getElementById("btn-extract-graph");
     const graphResult = document.getElementById("graph-rag-result");
+    const graphCanvas = document.getElementById("graph-visualization");
+
     if (btnExtract) {
         btnExtract.onclick = async () => {
             if (!currentArticle) return;
             btnExtract.disabled = true;
-            btnExtract.textContent = "지식 그래프 추출 중... (수십 초 소요될 수 있음)";
+            btnExtract.textContent = "지식 그래프 시각화 중... (수십 초 소요될 수 있음)";
             graphResult.classList.add("hidden");
+            graphCanvas.classList.add("hidden");
+
             try {
                 const result = await apiPost("/api/graph/extract", { article: currentArticle });
-                graphResult.textContent = result.subgraph || "추출된 그래프가 없습니다.";
-                graphResult.classList.remove("hidden");
+                
+                // 1. Text result
+                graphResult.textContent = result.subgraph_text || "추출된 그래프가 없습니다.";
+                // graphResult.classList.remove("hidden"); // Only show visual graph to keep it clean
+
+                // 2. Visual Graph Rendering
+                if (result.subgraph_vis && result.subgraph_vis.nodes.length > 0) {
+                    graphCanvas.classList.remove("hidden");
+                    const data = {
+                        nodes: new vis.DataSet(result.subgraph_vis.nodes),
+                        edges: new vis.DataSet(result.subgraph_vis.edges)
+                    };
+                    const options = {
+                        layout: {
+                            hierarchical: {
+                                direction: "UD",
+                                sortMethod: "directed",
+                                nodeSpacing: 150,
+                                levelSeparation: 100
+                            }
+                        },
+                        edges: {
+                            font: { size: 12, align: 'middle' },
+                            color: { color: '#ccc', highlight: '#848484' },
+                            smooth: { type: 'cubicBezier' }
+                        },
+                        nodes: {
+                            font: { size: 14, color: '#333' },
+                            color: {
+                                background: '#e0f7fa',
+                                border: '#00bcd4',
+                                highlight: { background: '#b2ebf2', border: '#0097a7' }
+                            }
+                        },
+                        physics: {
+                            hierarchicalRepulsion: { nodeDistance: 120 }
+                        }
+                    };
+                    new vis.Network(graphCanvas, data, options);
+                } else {
+                    graphResult.textContent = "시각화할 그래프 데이터가 부족합니다.";
+                    graphResult.classList.remove("hidden");
+                }
+
             } catch (err) {
                 graphResult.textContent = "오류: " + err.message;
                 graphResult.classList.remove("hidden");
             } finally {
                 btnExtract.disabled = false;
-                btnExtract.textContent = "지식 그래프 수동 추출 및 분석 (API 절약)";
+                btnExtract.textContent = "프레임 확산 그래프 시각화";
             }
         };
     }

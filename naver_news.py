@@ -192,7 +192,7 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
             resp = requests.get(
                 "https://openapi.naver.com/v1/search/news.json",
                 headers=headers,
-                params={"query": category, "display": 15, "sort": "sim"},
+                params={"query": category, "display": 15, "sort": "date"},
                 timeout=5
             )
             if resp.status_code != 200:

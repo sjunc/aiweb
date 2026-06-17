@@ -197,10 +197,11 @@ def extract_graph(req: AnalyzeRequest):
     # Search
     import re
     keywords = [w for w in re.findall(r'\b\w+\b', art.get("title", "")) if len(w) >= 2]
-    subgraph = graph_engine.search_subgraph(keywords)
+    subgraph_data = graph_engine.search_subgraph(keywords)
     
     return {
-        "subgraph": subgraph or "현재 해당 이슈에 대해 적재된 지식 그래프 관계가 충분하지 않습니다."
+        "subgraph_text": subgraph_data.get("text", "") or "현재 해당 이슈에 대해 적재된 지식 그래프 관계가 충분하지 않습니다.",
+        "subgraph_vis": subgraph_data.get("vis", {"nodes": [], "edges": []})
     }
 
 
