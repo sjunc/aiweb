@@ -130,7 +130,11 @@ function initDrag() {
     document.addEventListener("touchstart", (e) => onStart(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
     document.addEventListener("touchmove", (e) => onMove(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
     document.addEventListener("touchend", onEnd, { passive: true });
-    document.addEventListener("mousedown", (e) => onStart(e.clientX, e.clientY));
+    document.addEventListener("mousedown", (e) => {
+        // 빈 곳을 드래그할 때만 이동하도록 (텍스트 선택 방해 방지)
+        if (e.target.closest('button, input, a, .card-title, .card-desc, .mini-title, .sub-title, img, .chat-bubble')) return;
+        onStart(e.clientX, e.clientY);
+    });
     document.addEventListener("mousemove", (e) => { if (dragging) onMove(e.clientX, e.clientY); });
     document.addEventListener("mouseup", onEnd);
 }
@@ -225,8 +229,9 @@ function biasBarMini(ml) {
 
 function renderMainCard(art, el) {
     const barHTML = biasBarMini(art.ml_analysis);
-    const imgHTML = art.image_url 
-        ? `<img class="main-card-thumb" src="${art.image_url}" alt="news image" onerror="handleImageError(this, '${(art.press || "기타").replace(/'/g, "\\'")}', '${art.stance}', 80)" />`
+    const proxyUrl = art.image_url ? `https://wsrv.nl/?url=${encodeURIComponent(art.image_url)}` : "";
+    const imgHTML = proxyUrl
+        ? `<img class="main-card-thumb" src="${proxyUrl}" alt="news image" onerror="handleImageError(this, '${(art.press || "기타").replace(/'/g, "\\'")}', '${art.stance}', 80)" />`
         : placeholderHTML(art.press, art.stance, 80);
     el.innerHTML = `
         <div class="main-thumb-wrap">
@@ -264,8 +269,9 @@ function createMiniCard(art) {
     const color = stanceColor(art.stance);
     card.style.borderLeft = `3px solid ${color}`;
     const barHTML = biasBarMini(art.ml_analysis);
-    const imgHTML = art.image_url 
-        ? `<img class="mini-card-thumb" src="${art.image_url}" alt="news image" onerror="handleImageError(this, '${(art.press || "기타").replace(/'/g, "\\'")}', '${art.stance}', 48)" />`
+    const proxyUrl = art.image_url ? `https://wsrv.nl/?url=${encodeURIComponent(art.image_url)}` : "";
+    const imgHTML = proxyUrl 
+        ? `<img class="mini-card-thumb" src="${proxyUrl}" alt="news image" onerror="handleImageError(this, '${(art.press || "기타").replace(/'/g, "\\'")}', '${art.stance}', 48)" />`
         : placeholderHTML(art.press, art.stance, 48);
     card.innerHTML = `
         ${imgHTML}
@@ -310,7 +316,8 @@ async function openArticle(art) {
         modalBody.parentNode.insertBefore(modalImg, modalBody);
     }
     if (art.image_url) {
-        modalImg.src = art.image_url;
+        const proxyUrl = `https://wsrv.nl/?url=${encodeURIComponent(art.image_url)}`;
+        modalImg.src = proxyUrl;
         modalImg.style.display = "block";
     } else {
         modalImg.style.display = "none";
