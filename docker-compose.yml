@@ -10,6 +10,18 @@ services:
     environment:
       - PORT=8000
 
+  neo4j:
+    image: neo4j:5
+    container_name: neo4j-db
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/newsbalance123
+    volumes:
+      - neo4j_data:/data
+
   nginx:
     image: nginx:alpine
     container_name: nginx-proxy
@@ -20,3 +32,6 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - app
+
+volumes:
+  neo4j_data:

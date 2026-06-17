@@ -1,13 +1,17 @@
 import os
 import uvicorn
+import json
+import logging
+from contextlib import asynccontextmanager
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import naver_news
 import debate_engine
+import graph_engine
 
 load_dotenv()
 
@@ -132,8 +136,14 @@ async def trending_news(category: str = ""):
         raise HTTPException(502, f"뉴스 수집 실패: {e}")
 
 
+def _ingest_graph(api_keys, body, press):
+    kg_data = graph_engine.extract_knowledge_graph(api_keys, body, press)
+    if kg_data:
+        graph_engine.ingest_to_neo4j(kg_data)
+
+
 @app.post("/api/analyze")
-def analyze_article(req: AnalyzeRequest):
+def analyze_article(req: AnalyzeRequest, background_tasks: BackgroundTasks):
     """기사 본문 + Gemini 논평 (ML %는 trending에서 이미 제공)"""
     art = req.article
     if not art:
@@ -147,6 +157,10 @@ def analyze_article(req: AnalyzeRequest):
 
     gemini_result = None
     if GEMINI_KEYS:
+        # 백그라운드에서 GraphRAG 데이터 적재
+        press = art.get("press", "")
+        background_tasks.add_task(_ingest_graph, GEMINI_KEYS, body, press)
+
         try:
             enrich = {**art, "body": body}
             gemini_result = debate_engine.analyze_commentary(GEMINI_KEYS, enrich, art.get("ml_analysis"))
