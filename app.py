@@ -49,7 +49,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -92,7 +92,7 @@ async def read_index():
 
 
 @app.post("/api/body")
-async def get_article_body(req: AnalyzeRequest):
+def get_article_body(req: AnalyzeRequest):
     """기사 본문만 빠르게 크롤링하여 반환 (Gemini 로딩 전 표시용)"""
     art = req.article
     if not art:
@@ -133,7 +133,7 @@ async def trending_news(category: str = ""):
 
 
 @app.post("/api/analyze")
-async def analyze_article(req: AnalyzeRequest):
+def analyze_article(req: AnalyzeRequest):
     """기사 본문 + Gemini 논평 (ML %는 trending에서 이미 제공)"""
     art = req.article
     if not art:
@@ -152,11 +152,10 @@ async def analyze_article(req: AnalyzeRequest):
             gemini_result = debate_engine.analyze_commentary(GEMINI_KEYS, enrich, art.get("ml_analysis"))
         except Exception as e:
             print(f"Gemini 논평 오류: {e}")
-            error_msg = str(e)
             gemini_result = {
-                "bias_alert": f"Gemini 분석을 불러오지 못했습니다.",
+                "bias_alert": "Gemini 분석을 불러오지 못했습니다.",
                 "balanced_view": "",
-                "fact_check": error_msg,
+                "fact_check": "AI 분석 서비스에 일시적 오류가 발생했습니다.",
                 "comparison": "",
             }
 
@@ -169,7 +168,7 @@ async def analyze_article(req: AnalyzeRequest):
 
 
 @app.post("/api/perspective")
-async def agent_perspective(req: ChatRequest):
+def agent_perspective(req: ChatRequest):
     if not GEMINI_KEYS:
         raise HTTPException(400, "Gemini API 키가 설정되지 않았습니다.")
     try:

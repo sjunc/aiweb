@@ -89,7 +89,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /* ── Page nav ── */
 function goToPage(idx) {
-    if (idx === currentPage) return;
     currentPage = idx;
     tabs.forEach((b, i) => b.classList.toggle("active", i === idx));
     track.style.transform = `translateX(-${idx * 100}%)`;
@@ -343,7 +342,7 @@ async function loadGeminiAnalysis() {
     } catch (err) {
         analysisLoading.classList.add("hidden");
         analysisContent.classList.remove("hidden");
-        modalAlert.innerHTML = `<span style="color:var(--color-conservative);">${err.message}</span>`;
+        modalAlert.textContent = err.message;
     }
 }
 
@@ -356,7 +355,7 @@ function showGemini(result) {
     }
 
     const gem = result.gemini_analysis || {};
-    modalAlert.innerHTML = gem.bias_alert || "";
+    modalAlert.textContent = gem.bias_alert || "";
     modalView.textContent = gem.balanced_view || "";
     modalCompare.textContent = gem.comparison || "";
     modalFc.textContent = gem.fact_check || "";
@@ -393,16 +392,16 @@ function retryAnalysis() {
 async function sendChatMessage() {
     const msg = modalChatInput.value.trim();
     if (!msg || !currentArticle) return;
-    modalChatMsgs.innerHTML += `<div class="chat-bubble user">${escapeHtml(msg)}</div>`;
+    modalChatMsgs.insertAdjacentHTML('beforeend', `<div class="chat-bubble user">${escapeHtml(msg)}</div>`);
     modalChatInput.value = "";
     modalChatMsgs.scrollTop = modalChatMsgs.scrollHeight;
     modalChatSend.disabled = true;
     try {
         const data = await apiPost("/api/perspective", { article: currentArticle, user_message: msg });
-        modalChatMsgs.innerHTML += `<div class="chat-bubble assistant">${data.reply}</div>`;
+        modalChatMsgs.insertAdjacentHTML('beforeend', `<div class="chat-bubble assistant">${escapeHtml(data.reply)}</div>`);
         modalChatMsgs.scrollTop = modalChatMsgs.scrollHeight;
     } catch (err) {
-        modalChatMsgs.innerHTML += `<div class="chat-bubble error">오류: ${err.message}</div>`;
+        modalChatMsgs.insertAdjacentHTML('beforeend', `<div class="chat-bubble error">오류: ${escapeHtml(err.message)}</div>`);
     } finally { modalChatSend.disabled = false; modalChatInput.focus(); }
 }
 

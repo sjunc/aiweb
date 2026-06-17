@@ -1,5 +1,8 @@
 import re
 import html
+import time
+import threading
+import concurrent.futures
 import requests
 from urllib.parse import urlparse
 
@@ -71,7 +74,6 @@ def fetch_article_body(url: str, max_len: int = 5000) -> str | None:
     여러 한국 뉴스 사이트의 공통 패턴을 시도하고,
     실패하면 None 반환 (프론트에서 description fallback).
     """
-    import html as html_mod
     if not url:
         return None
     try:
@@ -103,7 +105,7 @@ def fetch_article_body(url: str, max_len: int = 5000) -> str | None:
         if m:
             text = re.sub(r'<script[^>]*>.*?</script>', '', m.group(1), flags=re.DOTALL)
             text = re.sub(r'<[^>]+>', '', text)
-            text = html_mod.unescape(text)
+            text = html.unescape(text)
             text = re.sub(r'\s+', ' ', text).strip()
             if len(text) > 100:
                 return text[:max_len]
@@ -142,17 +144,15 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
     if not client_id or not client_secret:
         raise ValueError("네이버 API 인증 정보가 필요합니다.")
 
-    import concurrent.futures
-    import time
-
     cats = categories if categories else NEWS_CATEGORIES
     cache_key = ",".join(sorted(cats))
 
     # 60초 TTL 캐시 — 같은 카테고리 조합의 반복 요청을 즉시 반환
-    if cache_key in _trending_cache:
-        cached_time, cached_data = _trending_cache[cache_key]
-        if time.time() - cached_time < 60:
-            return cached_data
+    with _trending_cache_lock:
+        if cache_key in _trending_cache:
+            cached_time, cached_data = _trending_cache[cache_key]
+            if time.time() - cached_time < 60:
+                return cached_data
 
     headers = {
         "X-Naver-Client-Id": client_id,
@@ -232,10 +232,12 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
                     art["image_url"] = None
 
     result = {"main": main, "subs": subs}
-    _trending_cache[cache_key] = (time.time(), result)
+    with _trending_cache_lock:
+        _trending_cache[cache_key] = (time.time(), result)
     return result
 
 
-# 서버 시간 기반 캐시 저장소
+# 서버 시간 기반 캐시 저장소 (스레드 안전)
 _trending_cache: dict = {}
+_trending_cache_lock = threading.Lock()
 
