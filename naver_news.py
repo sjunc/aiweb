@@ -75,15 +75,20 @@ def _extract_body_bs4(html_content: str, max_len: int = 5000) -> str | None:
         from bs4 import BeautifulSoup
         soup = BeautifulSoup(html_content, 'html.parser')
         
-        # Remove script and style elements
-        for script in soup(["script", "style"]):
-            script.decompose()
+        # Remove noisy tags
+        for noise in soup(["script", "style", "header", "footer", "nav", "aside", "form", "iframe", "noscript"]):
+            noise.decompose()
+            
+        # Remove noisy classes
+        for noise in soup.select(".header, .footer, .nav, .menu, .sidebar, .lang-selector, #header, #footer, .util_box, .sns_share"):
+            noise.decompose()
 
-        # Common article body selectors
+        # Common article body selectors (more specific ones first, removed too broad ones like "article" or ".content")
         selectors = [
-            "#dic_area", "#articleBodyContents", ".article_view", "article",
-            "#articleBody", "#newsEndContents", ".article-body", ".article_txt",
-            "._article_content", "#articleContent", ".content", "[itemprop='articleBody']"
+            "#dic_area", "#articleBodyContents", "#articleBody", 
+            "#newsEndContents", "#articleContent", 
+            ".article_view", ".article-body", ".article_txt", "._article_content",
+            "[itemprop='articleBody']", ".news_body", ".news_content", ".view_con"
         ]
         
         for sel in selectors:
@@ -93,7 +98,6 @@ def _extract_body_bs4(html_content: str, max_len: int = 5000) -> str | None:
                 if len(text) > 100:
                     return text[:max_len]
     except ImportError:
-        # Fallback if bs4 is missing
         pass
     return None
 
