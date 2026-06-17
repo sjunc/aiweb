@@ -60,14 +60,20 @@ def extract_knowledge_graph(api_keys: list[str] | str, text: str, press_name: st
                     response_mime_type="application/json",
                 )
             )
-            data = json.loads(response.text)
+            raw_text = response.text.strip()
+            if raw_text.startswith("```json"):
+                raw_text = raw_text[7:]
+            if raw_text.endswith("```"):
+                raw_text = raw_text[:-3]
+            raw_text = raw_text.strip()
+            data = json.loads(raw_text)
             if isinstance(data, list):
                 for item in data:
                     item['press'] = press_name
                 return data
             return []
         except Exception as e:
-            print(f"[WARN] Graph Extraction Gemini 에러: {e}")
+            print(f"[WARN] Graph Extraction Gemini 에러 ({type(e).__name__}): {e}")
             continue
     return []
 

@@ -9,6 +9,7 @@ services:
       - .env
     environment:
       - PORT=8000
+      - NEO4J_URI=bolt://neo4j:7687
 
   neo4j:
     image: neo4j:5
