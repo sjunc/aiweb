@@ -1,92 +1,85 @@
-# 📰 뉴스밸런스 (NewsBalance) — by 성준
+# 📰 뉴스밸런스 (NewsBalance) — AI 미디어 리터러시 플랫폼
 
-> **Weekly Media Literacy & Bias Report (9-12주차 통합 포트폴리오)**  
-> 뉴스 기사의 정치적 편향(진보·중도·보수)을 실시간 머신러닝으로 분석하고, 최신 Gemini 2.5 Flash를 활용하여 팩트 기반의 미디어 리터러시 다각적 리포트를 생성하는 웹 서비스 및 랜딩 페이지 저장소입니다.
+> **뉴스 기사의 정치적 편향을 실시간 머신러닝으로 분석하고, 최신 Gemini 2.5 Flash 및 GraphRAG를 활용해 다각적 팩트체크 리포트를 생성하는 차세대 미디어 리터러시 웹 서비스**
 
-* **실시간 데모 및 랜딩 페이지**: [http://100.27.218.145:8000/](http://100.27.218.145:8000/) (Nginx를 통해 http://100.27.218.145/ 로도 프록시 접합됨)
+* **실시간 데모 및 랜딩 페이지**: [http://100.27.218.145/](http://100.27.218.145/)
+
+---
+
+## 🚀 주요 AI 및 분석 기능 (Key Features)
+
+### 1. 🧠 초경량 머신러닝 편향성 분석 (ML Bias Classifier)
+- 대한민국 26개 주요 언론사의 기사 데이터 약 20,000건을 학습한 **TF-IDF + LDA 토픽 모델링 + 다중 클래스 로지스틱 회귀(Logistic Regression)** 파이프라인.
+- **245KB 단일 모델 파일 (`bias_model.pkl`)** 로 압축되어 서버 메모리 점유를 최소화하며, 1ms 내외의 초고속 연산으로 진보·중도·보수 확률(%)을 도출합니다.
+
+### 2. 🤖 Gemini 2.5 Flash 기반 다각적 리포트 & 팩트체크
+- 분석된 ML 편향성 데이터를 Gemini API 컨텍스트에 주입하여, 단순 요약을 넘어 **기사 내 편향 포인트 지적, 타 성향 보도 비교, 상세 팩트체크**를 생성합니다.
+- **프레이밍별 대체 헤드라인 비교:** 동일한 사건을 중립 / 진보 / 보수 관점에서 어떻게 다르게 제목으로 뽑아낼 수 있는지 3가지 버전의 헤드라인을 자동 생성하여 프레이밍 효과를 시각화합니다.
+- **대화형 AI 에이전트:** 기사를 읽다가 궁금한 점이나 '숨겨진 프레임' 등에 대해 즉각적으로 AI 패널에게 질문하고 답변을 받을 수 있습니다.
+
+### 3. 🕸️ GraphRAG 프레임 확산 그래프 시각화 (Knowledge Graph)
+- Gemini를 활용하여 기사 본문의 주요 키워드(인물, 사건, 개념)와 그들 간의 인과/대립/연관 관계를 추출해 **지식 그래프(Knowledge Graph)** 로 모델링합니다.
+- `vis-network`를 연동하여 기사의 숨은 구조와 프레임을 한눈에 파악할 수 있는 동적 시각화 네트워크를 그려냅니다.
+
+---
+
+## 🛠️ 백엔드 및 인프라 아키텍처 (Engineering Highlights)
+
+### 1. 고성능 병렬 뉴스 수집 파이프라인
+- **Connection Pooling & Concurrency:** 파이썬 `requests.Session` 객체를 활용한 커넥션 풀링과 10개의 `ThreadPoolExecutor`를 결합하여, 네이버 뉴스 검색 API와 썸네일(`og:image`), 기사 본문을 병목 없이 초고속으로 수집합니다.
+- **Semantic Duplicate Filtering:** 단순히 제목의 특수문자만 필터링하는 것을 넘어, 제목을 단어(Token) 단위로 쪼개고 의미적 교집합(Jaccard/Token Overlap)을 비교하여 내용이 같은 중복 뉴스를 완벽하게 걸러냅니다.
+- **Robust Fallback Extraction:** 언론사별 파편화된 HTML 구조 대응을 위해 표준화된 '네이버 뉴스 본문'을 최우선 스크래핑하며, `og:image` 누락 시 `BeautifulSoup4`를 이용해 기사 본문의 첫 번째 이미지를 억지로 추출하는 강력한 2차 안전망을 구축했습니다.
+
+### 2. 무중단 API & 캐시 최적화
+- **이중 API 키 자동 로테이션:** 메인 Gemini API 키의 한도 초과(Quota Exceeded) 시 환경 변수의 백업 키로 즉시 전환되는 장애 조치(Failover)가 설계되어 있습니다.
+- **서버사이드 메모리 캐싱:** 카테고리별 트렌딩 뉴스 목록 및 기사 본문 원문은 TTL(Time-To-Live) 기반의 스레드 안전(Thread-Safe) 딕셔너리로 캐시되어 불필요한 네트워크 I/O를 획기적으로 줄였습니다.
+
+### 3. 도커 기반 배포 (AWS EC2 + Docker Compose)
+- 단일 `docker-compose.yml`을 통해 **FastAPI 백엔드 앱 컨테이너**와 **Nginx 웹 서버 프록시**를 묶어 포트 80으로 무중단 서빙합니다.
 
 ---
 
 ## 📁 주요 폴더 및 파일 구조
 
 ```text
-├── .github/workflows/
-│   └── deploy.yml              # GitHub Actions를 통한 AWS EC2 자동 배포 워크플로우 (Node.js 24 런타임 강제)
 ├── static/                     # 웹 대시보드(데모) 프론트엔드 정적 파일
-│   ├── index.html              # 실시간 뉴스피드, 편향 그래프, AI 코멘터리 및 챗봇 UI
-│   ├── app.js                  # API 연동, 모달 레이아웃 제어, 이미지 Fallback 및 UI 비동기 로직
-│   └── style.css               # 다크 테마 글래스모피즘(Glassmorphism) 스타일시트
-├── index.html                  # 단일 칼럼 옛날 신문 양식의 프로젝트 설명 랜딩 페이지
-├── style.css                   # 랜딩 페이지 전용 CSS (상단 고정 네비게이션, 반응형 단일 칼럼 최적화)
-├── contents.md                 # 랜딩 페이지 내에 동적으로 바인딩(zero-md)되는 프로젝트 요약서
-├── app.py                      # FastAPI 백엔드 서버 (API 라우팅 및 static 서빙)
-├── debate_engine.py            # Gemini 2.5 Flash API 호출 및 프롬프트 제어 (이중 API 키 자동 로테이션 설계)
-├── naver_news.py               # 네이버 뉴스 OpenAPI 수집 및 스레드풀 기반 기사 og:image 병렬 크롤러
-├── ml_classifier.py            # 머신러닝 모델 학습 스크립트 (TF-IDF + LDA + Logistic Regression)
-├── bias_model.pkl              # 학습이 완료된 245KB 초경량 직렬화 모델 파일
-├── Dockerfile                  # FastAPI 앱 컨테이너화를 위한 Docker 명세
-├── docker-compose.yml          # FastAPI와 Nginx 리버스 프록시를 묶어주는 Docker Compose 명세
-├── nginx.conf                  # Nginx 프록시 라우팅 및 80포트 바인딩 설정
-└── requirements.txt            # Python 의존성 파일
+│   ├── index.html              # 실시간 뉴스피드, AI 리포트, 대체 헤드라인 및 GraphRAG UI
+│   ├── app.js                  # 비동기 API 연동, 모달 제어, Graph 시각화 처리 로직
+│   └── style.css               # 다크 테마 글래스모피즘(Glassmorphism) 반응형 스타일
+├── index.html                  # 단일 칼럼 옛날 신문 양식의 랜딩 페이지 (설명 페이지)
+├── contents.md                 # 랜딩 페이지에 동적으로 바인딩(zero-md)되는 프로젝트 요약 마크다운
+├── app.py                      # FastAPI 백엔드 메인 서버 (API 라우팅, CORS, 정적 서빙)
+├── debate_engine.py            # Gemini 2.5 Flash API 호출 (AI 논평, 헤드라인 비교 프롬프트 등)
+├── graph_engine.py             # GraphRAG 노드/에지 추출 및 그래프 생성 엔진
+├── naver_news.py               # 네이버 API 연동, 커넥션 풀링 기반 병렬 스크래퍼 및 중복 필터
+├── ml_classifier.py            # 머신러닝 학습 파이프라인 (TF-IDF + LDA + Logistic Regression)
+├── bias_model.pkl              # 학습이 완료된 245KB 초경량 분류 모델 직렬화 파일
+├── Dockerfile                  # 앱 빌드 명세
+└── docker-compose.yml          # FastAPI와 Nginx를 연동하는 컨테이너 오케스트레이션
 ```
 
 ---
 
-## 🤖 핵심 기술 명세 및 시스템 아키텍처
+## 🚀 로컬 환경 실행 가이드
 
-### 1. 실시간 뉴스 수집 & 병렬 썸네일 크롤링 (`naver_news.py`)
-- **이슈 정렬**: 네이버 뉴스 API에서 연관성 및 화제성 순인 `sort=sim` 유사도 기준으로 실시간 기사를 포괄적으로 수집합니다.
-- **병렬 크롤러**: 네이버 API가 미제공하는 기사 대표 이미지를 획득하기 위해 `ThreadPoolExecutor`(10개 워커 스레드)를 가동하여 원문 HTML의 Open Graph 태그(`og:image`)를 2.5초 내외로 병렬 크롤링합니다.
-
-### 2. 정치 편향성 ML 분석 파이프라인 (`ml_classifier.py`)
-- 26개 언론사의 대량 뉴스 기사 데이터를 토대로 학습된 **TF-IDF + LDA(Latent Dirichlet Allocation) + Logistic Regression(L2 규제)** 파이프라인입니다.
-- **245KB 초경량 모델 (`bias_model.pkl`)**로 경량화하여 추론 시 CPU 점유를 최소화하고 1ms 내외로 진보·중도·보수 확률(%)을 계산합니다.
-
-### 3. 사실 기반의 고성능 AI 리포트 (`debate_engine.py`)
-- Gemini 2.5 Flash API를 활용하여 4대 항목(편향 포인트 지적, 타 성향 비교, 팩트체크, 매체별 강조 차이) 분석을 제공합니다.
-- **속도 향상**: 1~2문장 내외로 응답 길이를 간결하게 제한하여 API 대기 시간을 최소화했습니다.
-- **문체 규제**: 모호하고 추측성 짙은 어조(`할 것입니다`, `보입니다`)를 완전히 금지하고, 기사 내 실제 수치나 팩트를 근거로 한 단정적 어조(`합니다`, `입니다`, `확인됩니다`)를 적용합니다.
-- **이중 API 키 Fallback**: 기본 API 키에 에러 또는 사용량 초과(Quota Exceeded)가 발생할 경우, 환경 변수로 지정된 백업 키(`GEMINI_API_KEY_BACKUP`)로 **즉시 자동 전환하여 2차 요청을 수행**하는 무중단 시스템이 적용되어 있습니다.
-
----
-
-## 🚀 배포 가이드 (AWS EC2 + Docker)
-
-### 1. EC2 인프라 및 보안 그룹 준비
-- Ubuntu Server 22.04 LTS 가상 서버를 가동하고 탄력적 IP(Elastic IP)를 할당하여 고정합니다.
-- 인바운드 보안 그룹에서 포트 `80` (HTTP), `443` (HTTPS), `22` (SSH), `5678` (n8n 자동화 서버용)을 오픈합니다.
-
-### 2. 서버 초기 설정 및 패키지 설치 (SSH 접속)
+1. **저장소 클론 및 패키지 설치**
 ```bash
-# swap 메모리 2GB 추가 (빌드 시 메모리 부족 방지)
-sudo fallocate -l 2G /swapfile
-sudo chmod 600 /swapfile
-sudo mkswap /swapfile
-sudo swapon /swapfile
-echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-
-# Docker 설치
-curl -fsSL https://get.docker.com | sudo sh
-sudo usermod -aG docker $USER && newgrp docker
-```
-
-### 3. 소스 클론 및 환경 설정
-```bash
-cd ~
 git clone https://github.com/sjunc/aiweb.git newsbalance
 cd newsbalance
-
-# .env 파일 생성 및 자격 증명 입력
-cat <<EOF > .env
-GEMINI_API_KEY=YOUR_PRIMARY_GEMINI_KEY
-GEMINI_API_KEY_BACKUP=YOUR_BACKUP_GEMINI_KEY
-NAVER_CLIENT_ID=YOUR_NAVER_CLIENT_ID
-NAVER_CLIENT_SECRET=YOUR_NAVER_CLIENT_SECRET
-EOF
+pip install -r requirements.txt
 ```
 
-### 4. Docker Compose 서비스 실행
+2. **환경 변수 파일 (`.env`) 세팅**
+```env
+GEMINI_API_KEY=당신의_제미나이_키
+GEMINI_API_KEY_BACKUP=당신의_예비_제미나이_키 (선택)
+NAVER_CLIENT_ID=당신의_네이버_클라이언트_ID
+NAVER_CLIENT_SECRET=당신의_네이버_시크릿
+```
+
+3. **서버 실행**
 ```bash
-docker compose up -d --build
+# 로컬 개발용 uvicorn 실행
+uvicorn app:app --host 0.0.0.0 --port 8000 --reload
 ```
-- 실행 이후, Nginx 프록시를 통해 브라우저에서 `http://<EC2_IP>` 또는 매핑된 도메인 접속 시 웹 서비스가 가동됩니다.
+브라우저에서 `http://localhost:8000` (랜딩 페이지) 또는 `http://localhost:8000/static/index.html` (데모 서비스)로 접속합니다.
