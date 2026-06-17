@@ -21,12 +21,11 @@ except Exception as e:
     print(f"[WARN] Neo4j 연결 실패: {e}")
 
 GRAPH_EXTRACTION_PROMPT = """
-당신은 지식 그래프 구축 전문가입니다. 다음 기사 본문에서 가장 핵심이 되는 인물, 조직, 사건, 개념(Entity)과 이들 간의 관계(Relation)를 추출하십시오.
-추출할 때, 기사가 특정 사건을 어떤 프레임으로 묘사하고 있는지 드러날 수 있도록 명시적인 동사나 관계형 명사를 사용하십시오.
+당신은 지식 그래프 구축 전문가입니다. 다음은 동일한 이슈에 대한 여러 언론사의 보도 내용들입니다. 이 텍스트들을 종합하여 가장 핵심이 되는 인물, 조직, 사건, 개념(Entity)과 이들 간의 관계(Relation)를 추출하십시오.
+특히, 각 언론사가 해당 사건이나 관계를 어떻게 다르게 묘사(프레이밍)하는지 드러나도록 'press' 필드에 해당 내용을 보도한 언론사 이름을 정확히 기재하십시오.
 
-[기사 정보]
-- 언론사: {press}
-- 본문: {text}
+[기사 목록]
+{articles_text}
 
 다음 JSON 배열 포맷으로 추출하십시오. 반드시 JSON 배열만 응답하십시오.
 [
@@ -39,19 +38,23 @@ GRAPH_EXTRACTION_PROMPT = """
 ]
 """
 
-def extract_knowledge_graph(api_keys: list[str] | str, text: str, press_name: str) -> list[dict]:
-    """Gemini를 사용해 텍스트에서 지식 그래프 트리플을 추출합니다."""
-    if not text:
+def extract_knowledge_graph(api_keys: list[str] | str, articles: list[dict]) -> list[dict]:
+    """Gemini를 사용해 여러 기사 텍스트에서 종합적인 지식 그래프 트리플을 추출합니다."""
+    if not articles:
         return []
     
     keys = [api_keys] if isinstance(api_keys, str) else [k for k in api_keys if k]
     if not keys:
         return []
 
+    articles_text = ""
+    for i, a in enumerate(articles):
+        articles_text += f"\n--- 기사 {i+1} ---\n- 언론사: {a['press']}\n- 본문: {a['text'][:3000]}\n"
+
     for key in keys:
         try:
             client = genai.Client(api_key=key)
-            prompt = GRAPH_EXTRACTION_PROMPT.format(press=press_name, text=text[:3000])
+            prompt = GRAPH_EXTRACTION_PROMPT.format(articles_text=articles_text[:9000])
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=prompt,
@@ -68,8 +71,7 @@ def extract_knowledge_graph(api_keys: list[str] | str, text: str, press_name: st
             raw_text = raw_text.strip()
             data = json.loads(raw_text)
             if isinstance(data, list):
-                for item in data:
-                    item['press'] = press_name
+                # We no longer override 'press' because Gemini extracts it per relation
                 return data
             return []
         except Exception as e:

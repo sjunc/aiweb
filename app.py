@@ -200,14 +200,42 @@ def extract_graph(req: AnalyzeRequest):
         raise HTTPException(400, "Gemini API 키가 설정되지 않았습니다.")
         
     # Extract
-    kg_data = graph_engine.extract_knowledge_graph(keys_to_use, body, press)
+    articles_for_graph = [{"press": press, "text": body}]
+    
+    # Try fetching 2-3 related articles
+    import re, requests
+    from urllib.parse import urlparse
+    keywords = " ".join([w for w in re.findall(r'\b[가-힣]{2,}\b', art.get("title", "")) if len(w) >= 2][:3])
+    
+    if keywords:
+        try:
+            resp = requests.get(
+                "https://openapi.naver.com/v1/search/news.json",
+                headers={"X-Naver-Client-Id": naver_news.NAVER_CLIENT_ID, "X-Naver-Client-Secret": naver_news.NAVER_CLIENT_SECRET},
+                params={"query": keywords, "display": 5, "sort": "sim"},
+                timeout=3
+            )
+            if resp.status_code == 200:
+                for item in resp.json().get("items", []):
+                    link = item.get("originallink") or item.get("link")
+                    if link and link != url:
+                        rel_stance, rel_press = naver_news.classify_media(link)
+                        # To save time, just use the description text for related articles instead of full fetch
+                        rel_body = naver_news.clean_html(item.get("description", ""))
+                        if rel_body and rel_press != press and rel_press != "기타":
+                            articles_for_graph.append({"press": rel_press, "text": rel_body})
+                            if len(articles_for_graph) >= 4:
+                                break
+        except Exception as e:
+            print("[WARN] Related articles fetch error:", e)
+
+    kg_data = graph_engine.extract_knowledge_graph(keys_to_use, articles_for_graph)
     if kg_data:
         graph_engine.ingest_to_neo4j(kg_data)
         
     # Search Neo4j for connected subgraph
-    import re
-    keywords = [w for w in re.findall(r'\b\w+\b', art.get("title", "")) if len(w) >= 2]
-    subgraph_data = graph_engine.search_subgraph(keywords)
+    keywords_list = [w for w in re.findall(r'\b[가-힣]{2,}\b', art.get("title", "")) if len(w) >= 2]
+    subgraph_data = graph_engine.search_subgraph(keywords_list)
     
     vis_data = subgraph_data.get("vis", {"nodes": [], "edges": []})
     text_data = subgraph_data.get("text", "")
@@ -217,7 +245,9 @@ def extract_graph(req: AnalyzeRequest):
         nodes_dict = {}
         edges = []
         for row in kg_data:
-            src, rel, tgt, prs = row["source"], row["relation"], row["target"], row["press"]
+            src, rel, tgt, prs = row.get("source"), row.get("relation"), row.get("target"), row.get("press", "언론사")
+            if not src or not tgt: continue
+            
             if src not in nodes_dict: nodes_dict[src] = {"id": src, "label": src, "group": "entity"}
             if tgt not in nodes_dict: nodes_dict[tgt] = {"id": tgt, "label": tgt, "group": "entity"}
             if prs not in nodes_dict: nodes_dict[prs] = {"id": prs, "label": prs, "group": "press", "shape": "box", "color": "#ff9a9e"}
@@ -226,7 +256,7 @@ def extract_graph(req: AnalyzeRequest):
             edges.append({"from": src, "to": tgt, "label": rel, "arrows": "to"})
             
         vis_data = {"nodes": list(nodes_dict.values()), "edges": edges}
-        text_data = "현재 이 기사에서 단독으로 추출된 프레임입니다. (타 매체 연관 데이터 부족)"
+        text_data = "현재 분석된 관련 기사들에서 추출된 통합 프레임입니다."
 
     return {
         "subgraph_text": text_data or "현재 해당 이슈에 대해 추출된 지식 그래프가 없습니다.",
