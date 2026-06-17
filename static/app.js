@@ -338,14 +338,17 @@ async function loadGeminiAnalysis() {
     if (!currentArticle) return;
     analysisLoading.classList.remove("hidden");
     analysisContent.classList.add("hidden");
+    
+    const apiKeyInput = document.getElementById("custom-api-key");
+    const customKey = apiKeyInput ? apiKeyInput.value.trim() : "";
 
     try {
-        const result = await apiPost("/api/analyze", { article: currentArticle });
+        const result = await apiPost("/api/analyze", { article: currentArticle, api_key: customKey });
         currentAnalysis = result;
         showGemini(result);
     } catch (err) {
-        analysisLoading.classList.add("hidden");
-        analysisContent.classList.remove("hidden");
+        analysisLoading.classList.remove("hidden");
+        analysisContent.classList.add("hidden");
         modalAlert.textContent = err.message;
     }
 }
@@ -400,8 +403,12 @@ async function sendChatMessage() {
     modalChatInput.value = "";
     modalChatMsgs.scrollTop = modalChatMsgs.scrollHeight;
     modalChatSend.disabled = true;
+
+    const apiKeyInput = document.getElementById("custom-api-key");
+    const customKey = apiKeyInput ? apiKeyInput.value.trim() : "";
+
     try {
-        const data = await apiPost("/api/perspective", { article: currentArticle, user_message: msg });
+        const data = await apiPost("/api/perspective", { article: currentArticle, user_message: msg, api_key: customKey });
         modalChatMsgs.insertAdjacentHTML('beforeend', `<div class="chat-bubble assistant">${escapeHtml(data.reply)}</div>`);
         modalChatMsgs.scrollTop = modalChatMsgs.scrollHeight;
     } catch (err) {
@@ -430,7 +437,10 @@ document.addEventListener("DOMContentLoaded", () => {
             graphCanvas.classList.add("hidden");
 
             try {
-                const result = await apiPost("/api/graph/extract", { article: currentArticle });
+                const apiKeyInput = document.getElementById("custom-api-key");
+                const customKey = apiKeyInput ? apiKeyInput.value.trim() : "";
+                
+                const result = await apiPost("/api/graph/extract", { article: currentArticle, api_key: customKey });
                 
                 // 1. Text result
                 graphResult.textContent = result.subgraph_text || "추출된 그래프가 없습니다.";

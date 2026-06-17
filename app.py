@@ -64,11 +64,13 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 class AnalyzeRequest(BaseModel):
     article: dict
+    api_key: Optional[str] = None
 
 
 class ChatRequest(BaseModel):
     article: dict
     user_message: str
+    api_key: Optional[str] = None
 
 
 def predict_ml(art: dict) -> dict:
@@ -142,12 +144,18 @@ def _ingest_graph(api_keys, body, press):
         graph_engine.ingest_to_neo4j(kg_data)
 
 
+from fastapi import BackgroundTasks
+
 @app.post("/api/analyze")
 def analyze_article(req: AnalyzeRequest, background_tasks: BackgroundTasks):
     """기사 본문 + Gemini 논평 (ML %는 trending에서 이미 제공)"""
     art = req.article
     if not art:
         raise HTTPException(400, "기사 정보가 필요합니다.")
+        
+    keys_to_use = [req.api_key] if req.api_key else GEMINI_KEYS
+    if not keys_to_use:
+        raise HTTPException(400, "Gemini API 키가 설정되지 않았습니다. API 키를 입력해주세요.")
 
     title = art.get("title", "")
     description = art.get("description", "")
@@ -156,10 +164,10 @@ def analyze_article(req: AnalyzeRequest, background_tasks: BackgroundTasks):
     body = naver_news.fetch_article_body(url) or description
 
     gemini_result = None
-    if GEMINI_KEYS:
+    if keys_to_use:
         try:
             enrich = {**art, "body": body}
-            gemini_result = debate_engine.analyze_commentary(GEMINI_KEYS, enrich, art.get("ml_analysis"))
+            gemini_result = debate_engine.analyze_commentary(keys_to_use, enrich, art.get("ml_analysis"))
         except Exception as e:
             print(f"Gemini 논평 오류: {e}")
             gemini_result = {
@@ -186,11 +194,12 @@ def extract_graph(req: AnalyzeRequest):
     body = naver_news.fetch_article_body(url) or art.get("description", "")
     press = art.get("press", "")
     
-    if not GEMINI_KEYS:
+    keys_to_use = [req.api_key] if req.api_key else GEMINI_KEYS
+    if not keys_to_use:
         raise HTTPException(400, "Gemini API 키가 설정되지 않았습니다.")
         
     # Extract
-    kg_data = graph_engine.extract_knowledge_graph(GEMINI_KEYS, body, press)
+    kg_data = graph_engine.extract_knowledge_graph(keys_to_use, body, press)
     if kg_data:
         graph_engine.ingest_to_neo4j(kg_data)
         
@@ -226,10 +235,11 @@ def extract_graph(req: AnalyzeRequest):
 
 @app.post("/api/perspective")
 def agent_perspective(req: ChatRequest):
-    if not GEMINI_KEYS:
+    keys_to_use = [req.api_key] if req.api_key else GEMINI_KEYS
+    if not keys_to_use:
         raise HTTPException(400, "Gemini API 키가 설정되지 않았습니다.")
     try:
-        reply = debate_engine.respond_as_panel(GEMINI_KEYS, req.article, req.user_message)
+        reply = debate_engine.respond_as_panel(keys_to_use, req.article, req.user_message)
         return {"reply": reply}
     except Exception as e:
         raise HTTPException(502, f"답변 생성 실패: {e}")

@@ -95,11 +95,16 @@
             <button class="modal-close" id="modal-close"><i class="fa-solid fa-xmark"></i></button>
             <div class="modal-scroll">
                 <div class="modal-article">
-                    <div class="modal-article-meta">
-                        <span class="modal-press" id="modal-press"></span>
-                        <span class="modal-date" id="modal-date"></span>
+                    <div class="modal-header">
+                        <div class="modal-press-wrap">
+                          <span class="modal-press" id="modal-press">언론사</span>
+                        </div>
+                        <div class="modal-meta-row" style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                            <span class="modal-meta" id="modal-date"></span>
+                            <input type="password" id="custom-api-key" placeholder="Gemini API Key (선택)" style="font-size: 0.75rem; padding: 0.2rem 0.5rem; border: 1px solid var(--border); border-radius: 4px; max-width: 150px; outline: none;">
+                        </div>
+                        <h2 class="modal-title" id="modal-title">기사 제목</h2>
                     </div>
-                    <h2 class="modal-title" id="modal-title"></h2>
                     <div class="modal-body" id="modal-body"></div>
                     <a class="btn btn-sm" id="modal-link" href="#" target="_blank" rel="noopener noreferrer">원문 보기 <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
                 </div>
