@@ -37,7 +37,7 @@ MEDIA_DB = {
     },
 }
 
-NEWS_CATEGORIES = ["정치", "경제", "사회", "국제", "문화", "과학", "IT"]
+NEWS_CATEGORIES = ["경제", "사회", "문화", "과학", "IT"]
 
 
 def clean_html(text):
