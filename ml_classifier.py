@@ -389,28 +389,39 @@ class BiasClassifier:
 
     # ── 5. 영속화 ─────────────────────────────
 
-    def save(self, path: str | None = None):
-        """모델을 pickle 파일로 저장"""
+    def save(self, path: str | None = None) -> bool:
+        """모델을 pickle 파일로 저장. 성공 시 True, 실패 시 False 반환."""
         p = path or self.model_path
-        with open(p, "wb") as f:
-            pickle.dump({
-                "pipeline": self.pipeline,
-                "tfidf": self.tfidf,
-                "lda": self.lda,
-            }, f)
+        try:
+            with open(p, "wb") as f:
+                pickle.dump({
+                    "pipeline": self.pipeline,
+                    "tfidf": self.tfidf,
+                    "lda": self.lda,
+                }, f)
+            return True
+        except (OSError, pickle.PicklingError) as e:
+            import logging
+            logging.getLogger(__name__).error("모델 저장 실패 (%s): %s", p, e)
+            return False
 
     def load(self, path: str | None = None) -> bool:
-        """저장된 모델 불러오기"""
+        """저장된 모델 불러오기. 성공 시 True, 파일 없거나 실패 시 False 반환."""
         p = path or self.model_path
         fpath = Path(p)
         if not fpath.exists():
             return False
-        with open(p, "rb") as f:
-            data = pickle.load(f)
-        self.pipeline = data["pipeline"]
-        self.tfidf = data["tfidf"]
-        self.lda = data["lda"]
-        return True
+        try:
+            with open(p, "rb") as f:
+                data = pickle.load(f)
+            self.pipeline = data["pipeline"]
+            self.tfidf = data["tfidf"]
+            self.lda = data["lda"]
+            return True
+        except (OSError, pickle.UnpicklingError, KeyError) as e:
+            import logging
+            logging.getLogger(__name__).error("모델 로드 실패 (%s): %s", p, e)
+            return False
 
 
 # ──────────────────────────────────────────────

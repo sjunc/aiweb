@@ -74,8 +74,12 @@ def stance_label(stance):
     return STANCE_LABELS.get(stance, '판별불가')
 
 
-_body_cache = {}
+_body_cache: dict = {}
 _body_cache_lock = threading.Lock()
+
+# 실시간 트렌딩 뉴스 캐시 저장소 (스레드 안전)
+_trending_cache: dict = {}
+_trending_cache_lock = threading.Lock()
 
 def _extract_body_bs4(html_content: str, max_len: int = 5000) -> str | None:
     try:
@@ -115,6 +119,9 @@ def _extract_body_bs4(html_content: str, max_len: int = 5000) -> str | None:
             if len(text) > 100: return text[:max_len]
     except ImportError:
         pass
+    except Exception as e:
+        import logging as _log
+        _log.getLogger(__name__).warning("HTML 본문 파싱 오류: %s", e)
     
     return None
 
@@ -191,7 +198,9 @@ def fetch_og_image(url):
             return m3.group(1).strip()
             
         return None
-    except Exception:
+    except Exception as e:
+        import logging as _log
+        _log.getLogger(__name__).warning("og:image 가져오기 실패 (%s): %s", url, e)
         return None
 
 
@@ -329,8 +338,4 @@ def fetch_trending_news(client_id, client_secret, count=16, categories=None):
         _trending_cache[cache_key] = (time.time(), result)
     return result
 
-
-# 서버 시간 기반 캐시 저장소 (스레드 안전)
-_trending_cache: dict = {}
-_trending_cache_lock = threading.Lock()
 

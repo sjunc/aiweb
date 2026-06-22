@@ -6,8 +6,10 @@ Gemini는 언어적 편향 포인트, 타 성향 언론사 비교, 균형 시각
 """
 
 import json
+import re
 from google import genai
 from google.genai import types
+import graph_engine
 
 COMMENTARY_PROMPT = """
 당신은 미디어 리터러시 교육 전문가입니다.
@@ -97,9 +99,6 @@ def analyze_commentary(api_keys: list[str] | str, article: dict, ml_result: dict
 
     raise Exception(f"모든 Gemini API Key가 실패했습니다. 마지막 오류: {last_err}")
 
-
-import graph_engine
-import re
 
 def respond_as_panel(api_keys: list[str] | str, article: dict, user_message: str) -> str:
     """에이전트 패널 답변 생성 (API 키 에러 시 백업 키로 자동 전환)"""

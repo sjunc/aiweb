@@ -1,8 +1,9 @@
 import os
-import uvicorn
+import re
 import json
 import logging
-from contextlib import asynccontextmanager
+import uvicorn
+import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request, BackgroundTasks
 from fastapi.responses import FileResponse
@@ -13,6 +14,9 @@ from typing import Optional
 import naver_news
 import debate_engine
 import graph_engine
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 load_dotenv()
 
@@ -25,11 +29,11 @@ GEMINI_API_KEY_BACKUP = os.environ.get("GEMINI_API_KEY_BACKUP", "")
 GEMINI_KEYS = [k for k in [GEMINI_API_KEY, GEMINI_API_KEY_BACKUP] if k]
 
 if not NAVER_CLIENT_ID or not NAVER_CLIENT_SECRET:
-    print("[WARN] .env에 NAVER_CLIENT_ID / NAVER_CLIENT_SECRET이 없습니다.")
+    logger.warning(".env에 NAVER_CLIENT_ID / NAVER_CLIENT_SECRET이 없습니다.")
 if not GEMINI_KEYS:
-    print("[WARN] Gemini API 키가 설정되어 있지 않습니다.")
+    logger.warning("Gemini API 키가 설정되어 있지 않습니다.")
 else:
-    print(f"[OK] {len(GEMINI_KEYS)}개의 Gemini API Key 로드 완료 (백업 자동 전환 활성화)")
+    logger.info("%d개의 Gemini API Key 로드 완료 (백업 자동 전환 활성화)", len(GEMINI_KEYS))
 
 # ML 분류기 로드 시도 (없으면 fallback)
 ML_AVAILABLE = False
@@ -38,12 +42,12 @@ try:
     _classifier = BiasClassifier()
     if _classifier.load():
         ML_AVAILABLE = True
-        print("[OK] ML 분류기 모델 로드 완료")
+        logger.info("ML 분류기 모델 로드 완료")
     else:
-        print("[INFO] ML 모델 파일 없음. python ml_classifier.py 로 학습 필요.")
+        logger.info("ML 모델 파일 없음. python ml_classifier.py 로 학습 필요.")
 except ImportError:
     _classifier = None
-    print("[INFO] ml_classifier.py 없음. ML 분석 불가.")
+    logger.info("ml_classifier.py 없음. ML 분석 불가.")
 
 app = FastAPI(
     title="뉴스밸런스 (NewsBalance)",
@@ -85,7 +89,7 @@ def predict_ml(art: dict) -> dict:
             art.get("description", "")
         )
     except Exception as e:
-        print(f"ML 예측 오류: {e}")
+        logger.error("ML 예측 오류: %s", e)
         return {"progressive": 0, "centrist": 0, "conservative": 0,
                 "stance": "unknown", "stance_label": "오류", "confidence": 0}
 
@@ -136,6 +140,7 @@ async def trending_news(category: str = ""):
                 art["ml_analysis"] = predict_ml(art)
         return data
     except Exception as e:
+        logger.error("뉴스 수집 실패: %s", e)
         raise HTTPException(502, f"뉴스 수집 실패: {e}")
 
 
@@ -145,7 +150,6 @@ def _ingest_graph(api_keys, body, press):
         graph_engine.ingest_to_neo4j(kg_data)
 
 
-from fastapi import BackgroundTasks
 
 @app.post("/api/analyze")
 def analyze_article(req: AnalyzeRequest, background_tasks: BackgroundTasks):
@@ -170,7 +174,7 @@ def analyze_article(req: AnalyzeRequest, background_tasks: BackgroundTasks):
             enrich = {**art, "body": body}
             gemini_result = debate_engine.analyze_commentary(keys_to_use, enrich, art.get("ml_analysis"))
         except Exception as e:
-            print(f"Gemini 논평 오류: {e}")
+            logger.error("Gemini 논평 오류: %s", e)
             gemini_result = {
                 "bias_alert": "Gemini 분석을 불러오지 못했습니다.",
                 "balanced_view": "",
@@ -203,15 +207,13 @@ def extract_graph(req: AnalyzeRequest):
     articles_for_graph = [{"press": press, "text": body}]
     
     # Try fetching 2-3 related articles
-    import re, requests
-    from urllib.parse import urlparse
-    keywords = " ".join([w for w in re.findall(r'\b[가-힣]{2,}\b', art.get("title", "")) if len(w) >= 2][:3])
+    keywords = " ".join([w for w in re.findall(r'[가-힣]{2,}', art.get("title", "")) if len(w) >= 2][:3])
     
-    if keywords:
+    if keywords and NAVER_CLIENT_ID:
         try:
             resp = requests.get(
                 "https://openapi.naver.com/v1/search/news.json",
-                headers={"X-Naver-Client-Id": naver_news.NAVER_CLIENT_ID, "X-Naver-Client-Secret": naver_news.NAVER_CLIENT_SECRET},
+                headers={"X-Naver-Client-Id": NAVER_CLIENT_ID, "X-Naver-Client-Secret": NAVER_CLIENT_SECRET},
                 params={"query": keywords, "display": 5, "sort": "sim"},
                 timeout=3
             )
@@ -227,7 +229,7 @@ def extract_graph(req: AnalyzeRequest):
                             if len(articles_for_graph) >= 4:
                                 break
         except Exception as e:
-            print("[WARN] Related articles fetch error:", e)
+            logger.warning("Related articles fetch error: %s", e)
 
     kg_data = graph_engine.extract_knowledge_graph(keys_to_use, articles_for_graph)
     if kg_data:
@@ -273,6 +275,7 @@ def agent_perspective(req: ChatRequest):
         reply = debate_engine.respond_as_panel(keys_to_use, req.article, req.user_message)
         return {"reply": reply}
     except Exception as e:
+        logger.error("답변 생성 실패: %s", e)
         raise HTTPException(502, f"답변 생성 실패: {e}")
 
 
