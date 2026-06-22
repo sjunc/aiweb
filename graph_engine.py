@@ -2,7 +2,7 @@
 graph_engine.py — GraphRAG 기반 이슈 프레임 추적 및 지식 그래프 엔진
 
 리팩토링 포인트:
-- Neo4j 연결 상태를 _neo4j_ok 플래그로 명시적 관리
+- Neo4j 연결 상태를 _neo4j_ok 플래그로 명시적 관리 (재연결 메커니즘 도입)
 - ingest_to_neo4j에서 적재 건수 로그 추가
 - search_subgraph에서 엔티티 목록 상위 N개 제한 (성능 보호)
 - debate_engine._call_gemini 재사용으로 Gemini 호출 일관성 확보
@@ -31,18 +31,37 @@ _neo4j_ok = False
 
 try:
     driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+    # 초기 연결 시도 (백그라운드에서 실행 시 바로 연결이 안 될 수 있음)
     driver.verify_connectivity()
     _neo4j_ok = True
-    logger.info("Neo4j 연결 성공 (%s)", NEO4J_URI)
+    logger.info("Neo4j 초기 연결 성공 (%s)", NEO4J_URI)
 except (ServiceUnavailable, AuthError) as e:
-    logger.warning("Neo4j 연결 실패 (GraphRAG 비활성화): %s", e)
+    logger.warning("Neo4j 초기 연결 대기 중 (첫 쿼리 또는 헬스체크에서 재연결 시도): %s", e)
 except Exception as e:
     logger.warning("Neo4j 초기화 오류: %s", e)
 
 
 def is_neo4j_available() -> bool:
-    """Neo4j 연결 가능 여부 반환 (헬스체크 등에서 활용)"""
-    return _neo4j_ok
+    """Neo4j 연결 가능 여부 반환 (헬스체크 등에서 활용). 미연결 상태일 경우 재연결 시도."""
+    global _neo4j_ok, driver
+    if _neo4j_ok and driver:
+        try:
+            driver.verify_connectivity()
+            return True
+        except Exception:
+            _neo4j_ok = False
+
+    try:
+        if driver is None:
+            driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        driver.verify_connectivity()
+        _neo4j_ok = True
+        logger.info("Neo4j 재연결 성공 (%s)", NEO4J_URI)
+        return True
+    except Exception as e:
+        _neo4j_ok = False
+        logger.debug("Neo4j 연결 확인 실패: %s", e)
+        return False
 
 
 # ── Gemini 그래프 추출 프롬프트 ────────────────────────────────────
@@ -144,7 +163,7 @@ def ingest_to_neo4j(kg_data: list[dict]) -> int:
     Returns:
         적재 시도한 트리플 수. Neo4j 비활성화 또는 오류 시 0.
     """
-    if not _neo4j_ok or not driver or not kg_data:
+    if not is_neo4j_available() or not driver or not kg_data:
         if kg_data:
             logger.debug("Neo4j 비활성화 상태: %d개 트리플 적재 건너뜀", len(kg_data))
         return 0
@@ -183,7 +202,7 @@ def search_subgraph(query_entities: list[str]) -> dict:
     """
     empty = {"text": "", "vis": {"nodes": [], "edges": []}}
 
-    if not _neo4j_ok or not driver or not query_entities:
+    if not is_neo4j_available() or not driver or not query_entities:
         return empty
 
     # 과도한 엔티티 목록으로 인한 Cypher 성능 저하 방지
