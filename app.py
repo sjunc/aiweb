@@ -200,7 +200,7 @@ async def trending_news(category: str = ""):
         # 모든 기사에 ML % 첨부
         for art_dict in [data.get("main")] + (data.get("subs") or []):
             if art_dict:
-                art_schema = ArticleSchema(**{k: art_dict.get(k, "") for k in ArticleSchema.model_fields})
+                art_schema = ArticleSchema(**{k: art_dict[k] for k in ArticleSchema.model_fields if k in art_dict})
                 art_dict["ml_analysis"] = _predict_ml(art_schema)
 
         return data
